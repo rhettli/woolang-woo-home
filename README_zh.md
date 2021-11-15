@@ -1,6 +1,6 @@
 # woo语言官网主页
 
-开发技术：woo+murphy
+###开发技术: [woo](https://woolang.net) +[murphy](https://gitee.com/oshine/murphy)
 
 
 ## 启动方式：
