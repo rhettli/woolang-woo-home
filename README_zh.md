@@ -1,10 +1,10 @@
-# woo code language official website
+# woo语言官网主页
 
-use：woo+murphy
+开发技术：woo+murphy
 
 
-## Get Start:
-1.) create a new file ".env",and type the content below:
+## 启动方式：
+1.)新建一个.env文件，输入一下内容：
 ```editorconfig
 
 # 当前环境设置，pre线下环境，测试环境；  prd线上 正式环境
@@ -38,4 +38,4 @@ template_code=
 
 ```
 
-2.) start with: `woo ./ -t http`
+2.)启动: `woo ./ -t http`
