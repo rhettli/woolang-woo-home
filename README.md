@@ -1,6 +1,6 @@
 # woo code language official website
 
-use：woo+murphy
+### dev use: [woo](https://woolang.net) +[murphy](https://gitee.com/oshine/murphy)
 
 
 ## Get Start:
