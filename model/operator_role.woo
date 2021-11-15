@@ -1,0 +1,23 @@
+-- 继承model
+
+local _M = {
+    _model = 'operator_role',
+    STATUS_TEXT = { [1] = '有效', [0] = '已禁用' }
+}
+
+function _M:new()
+    return self
+end
+
+--_M.STATUS_TEXT = { [1] = '有效', [2] = '已禁用' }
+
+function _M:toJson()
+    return {
+        id = self.id,
+        nickname = self.nickname,
+        email = self.email
+    }
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)

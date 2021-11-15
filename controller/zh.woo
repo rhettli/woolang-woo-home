@@ -1,0 +1,16 @@
+local class_index = {}
+
+
+-- 启动默认首页地址
+function class_index:index()
+    self:view('index', ''):render('index.index.index')
+end
+
+-- 搜索
+function class_index:search()
+    --self:view('title', '诈骗网 | 遇到问题 来搜一搜 才知真假1'):render('index.index.search')
+end
+
+class_index = _extend(class_index, "controller/_base")
+
+return class_index.super[2](class_index)

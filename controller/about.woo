@@ -1,0 +1,14 @@
+local cls_about = {}
+
+
+-- 话题详情页面
+function cls_about:index()
+
+
+    self:view('descr', title):view('talk', talk):render('index.about.index')
+
+end
+
+cls_about = _extend(cls_about, "controller/_base")
+
+return cls_about.super[2](cls_about)

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body id="container">
+
+</body>
+
+
+<link rel="stylesheet" href="/static/gdemo/gdemo.min.css">
+<script src="/static/gdemo/gdemo.min.js"></script>
+
+
+<link rel="stylesheet" href="/static/prism.css">
+<script src="/static/prism.js"></script>
+
+<script>
+    // Constructor receives a selector that indicates
+    // where to inject the demonstration in your page.
+    const demo = new GDemo('#container');
+
+    const code = `
+-- use socket to mock http instead of
+-- "woo.http:new():get('http://www.baidu.com')"
+local sock = woo.sockets:new()
+local ok = sock:dial('tcp', 'www.baidu.com:80', function()
+    r = sock:write(_bytes("GET / HTTP/1.1\\r\\n" ..
+            "Host: www.baidu.com\\r\\n" ..
+            "User-Agent: curl/7.10\\r\\n" ..
+            "Connection: Close\\r\\n\\r\\n"))
+    local bytes, err = sock:readAll(false)
+    rule_re = '<title>(.*?)</title>'
+    _out(_re_match(_strs(bytes), rule_re)[1][2])
+end)
+`
+    const highlightedCode = Prism.highlight(
+        code,
+        Prism.languages.lua,
+        'lua'
+    );
+
+    const c = Prism.highlight(
+        ` woo -r "_out(_re_match(woo.http:new():get('http://www.baidu.com').body, \\`,
+        Prism.languages.shell,
+        'shell'
+    );
+    const cc = Prism.highlight(
+        ` '<title>(.*?)</title>')[1][2])"`,
+        Prism.languages.shell,
+        'shell'
+    );
+
+    demo.openApp('terminal', {minHeight: '350px', promptString: '$'})
+        .command(c, {onCompleteDelay: 200})
+        .command(cc, {onCompleteDelay: 2000})
+        .respond('百度一下，你就知道')
+        .command('', {onCompleteDelay: 3000})
+        .openApp('editor', {minHeight: '350px', windowTitle: 'demo.woo'})
+        .write(highlightedCode, {onCompleteDelay: 1500})
+        .openApp('terminal', {minHeight: '350px', promptString: '$'})
+        .command('woo ./demo.woo', {onCompleteDelay: 500})
+        .respond('百度一下，你就知道')
+        .command('', {onCompleteDelay: 500})
+        .end();
+</script>
+
+
+</html>

@@ -1,0 +1,25 @@
+<!-- simple_form 后面的第二个参数不能省略 -->
+
+{% local t=simple_form(operator,{}) %}
+
+
+{% t.input('username',{ label='用户名',width='100%' }) %}
+
+
+{% t.select('operator_role_id',{  label='角色|<a href="/admin/operator_role/">去编辑</a>' , collection= _render_model( 'operator_role','id','name','#admin') } ) %}
+
+{% t.input('password_',{ label='密码（不为空则修改）',width='100%' }) %}
+
+{% t.select('status',{  label='状态' } ) %}
+<!-- t.select('status',{  label='状态', collection = { [2] ="无效" , [1] ="有效" } } ) -->
+{% t.submit('保存') %}
+
+{% t.render() %}
+
+
+
+<script type="text/javascript">
+    $(function () {
+
+    });
+</script>

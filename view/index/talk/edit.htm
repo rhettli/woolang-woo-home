@@ -1,0 +1,495 @@
+<head1 data-n-head-ssr="">
+    <link rel="stylesheet" href="/static/css/docDetail.css">
+</head1>
+
+<div id="body" class="body page_simple page_detail" style="min-height: 927px;">
+    <div class="container_box">
+        <div class="markdown_article_detail hasOtherBox markdown_article_detail_course">
+            <div class="group">
+                <div class="post_detail_main">
+                    <div id="articleApp" class="post_detail mod_default_box">
+                        <div style="margin-top: -20px">
+                            <div class="ask_content">
+                                <div class="post_content">
+                                    <h1 style=" text-align: center; font-size: 1.5rem; color: #999999;">正文</h1>
+                                    <textarea id="id_content"
+                                              style="padding: 20px;width: 100%;height: 700px;border: 1px solid #ededed;"
+                                              placeholder="正文内容"></textarea>
+                                    <div style="display: flex; padding: 4px 10px;margin-top: 8px;"
+                                         :class="is_add_topic?'edit_topic':''">
+                                        <span v-for="tag in list_tag"
+                                              style="border-radius: 1rem;color: white;padding: 2px 8px;background-color: rgb(84 84 84);border: 1px solid rgb(227, 227, 227);"
+                                              v-html="tag.title"></span>
+
+                                        <div style="" class="tag_panel">
+                                            <input v-show="is_add_topic" v-model="new_tab_value" @keyup.enter="newTag"
+                                                   placeholder="输入话题回车添加"
+                                                   style="width: 190px; padding-left: 10px;">
+                                            <div class="item" v-show="search_tag_list.length>0">
+                                                <div v-for="(tag,index) in search_tag_list" v-html="tag.title"
+                                                     @click="tagClick(tag.id,tag.title)"
+                                                     :style="index==0?'background-color:#ebebff':''"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post_extra_info detail_footer">
+                            <div id="footer-opr-site"></div>
+                            <div id="blog-footer-opr" class="post_opr_area" style="cursor: pointer;">
+                                <div class="post_opr_area_inner_area">
+                                    <div class="post_opr_area_inner">
+                                        <div class="post_opr post_opr_public post_opr_public_l post_opr_invite_answer">
+                                                <span class="footer-left-btn"><a @click="save" class="btn btn_primary">保存</a>
+                                                   <a @click="start_edit_topic_tag"
+                                                      :class="(is_add_topic?'topic_block':'')+' btn btn_default'">添加话题</a></span>
+<!--                                            <a class="post_opr_meta"><span-->
+<!--                                                    class="icon_post_opr ic_invite_answer"></span>邀请回答</a>-->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--  删除当前帖子  -->
+                            <div class="dialog_wrapper dialog_with_head" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:600px;">
+                                    <div class="dialog"><!---->
+                                        <div class="dialog_hd"><h3>删除当前帖子</h3></div>
+                                        <div class="dialog_bd"><!---->
+                                            <div class="page_msg large simple default single_line">
+                                                <div class="inner group"><span class="msg_icon_wrapper"><i
+                                                        class="icon_msg info "></i></span>
+                                                    <div class="msg_content "><h4>删除后帖子内容及评论将一并被删除，且不可恢复。</h4></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="dialog_ft"><a href="javascript:;"
+                                                                  class="btn js_btn btn_warn">删除</a><!----><a
+                                                href="javascript:;" class="btn btn_default js_btn">取消</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 再次确定删除当前帖子 -->
+                            <div class="dialog_wrapper" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:496px;">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+                                        <!---->
+                                        <div class="dialog_bd"><!---->
+                                            <div class="level7_delete_dialog"><img
+                                                    src="https://res.wx.qq.com/community/dist/community/images/icons_outlined_error_0d380d.svg"
+                                                    class="level7_delete_dialog_icon">
+                                                <div class="level7_delete_dialog_msg"><p
+                                                        class="level7_delete_dialog_msg_title">确定删除？</p>
+                                                    <p class="level7_delete_dialog_msg_tip">删除后不可恢复</p></div>
+                                            </div>
+                                            <input placeholder="请输入删除理由" value=""
+                                                   class="level7_delete_dialog_reason"></div>
+                                        <div class="dialog_ft"><a href="javascript:;" class="btn btn_default"
+                                                                  style="color:#07C160;">取消</a><a
+                                                href="javascript:;" class="btn btn_primary">确定</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--  关注微信开放社区  -->
+                            <div class="dialog_wrapper dialog_notice dialog_with_head" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:514px;">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+                                        <div class="dialog_hd"><h3>关注“微信开放社区”公众号</h3></div>
+                                        <div class="dialog_bd"><!----><p class="dialog_notice_info">
+                                            关注后，可在微信内接收相应的重要提醒。</p>
+                                            <div class="js_qr_img qrcheck_img_area"><img
+                                                    src="https://res.wx.qq.com/community/dist/community/images/community_qrcode_c0a4a0.jpg"
+                                                    alt="" class="qrcheck_img" style="margin:0 auto;"></div>
+                                            <p class="dialog_notice_indicate">请使用微信扫描二维码关注 “微信开放社区” 公众号</p></div>
+                                        <!----></div>
+                                </div>
+                            </div>
+                            <!-- 反馈内容 -->
+                            <div class="dialog_wrapper dialog_with_head" style="display: none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:600px;">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+                                        <div class="dialog_hd"><h3>反馈</h3></div>
+                                        <div class="dialog_bd"><!---->
+                                            <div><textarea type="text" placeholder="请填写反馈内容" rows="5"
+                                                           class="review_dialog_textarea"></textarea>
+                                                <div style="text-align:center;margin-top:20px;">
+                                                    <button class="btn btn-primary">确定</button>
+                                                    <button class="btn btn-default" style="margin-left:20px;">取消
+                                                    </button>
+                                                </div><!----></div>
+                                        </div><!----></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 邀请用户回答问题 -->
+                    <div v-show="is_show_invite_panel" class="mod_dialog_invite_answer" style="display: none">
+                        <div class="dialog_wrapper dialog_invite_answer dialog_with_head">
+                            <div class="dialog_wrp_new dialog_component" style="width: 600px;">
+                                <div class="dialog"><a href="javascript:;" class="icon16_opr closed pop_closed"
+                                                       @click="close_invite_panel">关闭</a>
+                                    <div class="dialog_hd"><h3>选择要邀请回答的用户</h3></div>
+                                    <div class="dialog_bd"><!---->
+                                        <div class="dialog_invite_answer_box">
+                                            <div class="dialog_invite_answer_box_head"><p
+                                                    class="dialog_invite_answer_box_head_desc">今天还可邀请 1 次</p><!---->
+                                            </div><!---->
+                                            <div class="dialog_invite_answer_box_body"><!---->
+                                                <ul class="invite_answer_list">
+                                                    <li class="invite_answer_list_item">
+                                                        <div class="invite_answer_list_item_head"><span
+                                                                class="invite_answer_list_item_head_avatar"><a
+                                                                href="/community/personal/oCJUsw-KVe9k-3hRSXswnoQOnmJ4"
+                                                                class="" target="_blank"><img
+                                                                src="http://mmbiz.qpic.cn/mmbiz_png/FNvhcSpWNlj39Vtic3PkCHuY2AcKsclJQQAbvX3T0WJgiaiaZFybPcymWN7vVAKrF7QdiaYfbcMn8ic1j7tbPcYv5iaA/0?wx_fmt=png"
+                                                                class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                            <div class="invite_answer_list_item_head_content"><p
+                                                                    class="invite_answer_list_item_head_content_title">
+                                                                社区技术运营专员-Jahozheng
+                                                                <span title="微信官方用户" class="official_new"></span></p>
+                                                                <p class="invite_answer_list_item_head_content_desc">
+                                                                    <span class="invite_answer_list_item_head_content_desc_item">8479 回答</span>
+                                                                    <!----></p></div>
+                                                        </div>
+                                                        <div class="invite_answer_list_item_foot">
+                                                            <div class="invite__foot__below__level">
+                                                                <div title="成长等级：4"
+                                                                     class="mode__grow-up-tag mode__grow-up-tag__small">
+                                                                    <span class="grow__up__tag__icon grow__up__tag__growup1__icon grow__up__tag__growup4__icon"></span>
+                                                                </div>
+                                                                <span class="invite__foot__below__level__desc">以上可以邀请</span>
+                                                            </div><!----></div>
+                                                    </li>
+                                                    <li class="invite_answer_list_item">
+                                                        <div class="invite_answer_list_item_head"><span
+                                                                class="invite_answer_list_item_head_avatar"><a
+                                                                href="/community/personal/oCJUswyw4C--j8KScdkPNrTrDKfU"
+                                                                class="" target="_blank"><img
+                                                                src="https://wx.qlogo.cn/mmhead/YCIejBrK7ia6xzgAYFQV7ff8ARicibrFo4I93WENYy5k5o/0"
+                                                                class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                            <div class="invite_answer_list_item_head_content"><p
+                                                                    class="invite_answer_list_item_head_content_title">
+                                                                llldxh
+                                                                <!----></p>
+                                                                <p class="invite_answer_list_item_head_content_desc">
+                                                                    <span class="invite_answer_list_item_head_content_desc_item">1 回答</span>
+                                                                    <!----></p></div>
+                                                        </div>
+                                                        <div class="invite_answer_list_item_foot"><!----><a
+                                                                href="javascript:;" class="btn btn_main btn_disabled">已邀请</a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="invite_answer_list_item">
+                                                        <div class="invite_answer_list_item_head"><span
+                                                                class="invite_answer_list_item_head_avatar"><a
+                                                                href="/community/personal/oCJUswzLai8eiOTZj9ZsIWjEdop4"
+                                                                class="" target="_blank"><img
+                                                                src="https://wx.qlogo.cn/mmhead/7xeAZTTkLV35e8bcaLWvWRKofAyIdpokdqNqicn7eRrA/0"
+                                                                class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                            <div class="invite_answer_list_item_head_content"><p
+                                                                    class="invite_answer_list_item_head_content_title">
+                                                                神奇的桑桑😄😄😄
+                                                                <!----></p>
+                                                                <p class="invite_answer_list_item_head_content_desc">
+                                                                    <span class="invite_answer_list_item_head_content_desc_item">251 回答</span>
+                                                                    <!----></p></div>
+                                                        </div>
+                                                        <div class="invite_answer_list_item_foot"><!----><a
+                                                                href="javascript:;"
+                                                                class="btn btn_main green_btn_invite">邀请</a></div>
+                                                    </li>
+                                                    <li class="invite_answer_list_item">
+                                                        <div class="invite_answer_list_item_head"><span
+                                                                class="invite_answer_list_item_head_avatar"><a
+                                                                href="/community/personal/sq_oVq8I0dARzLWsgJ0eM7Pua6zXT9A"
+                                                                class="" target="_blank"><img
+                                                                src="http://mmbiz.qpic.cn/mmbiz_jpg/0J59OribWVKzhH0A5SrvI5fnb19rdqYmwjeqxvX6ufcdLFiaZ0PPKRNubOSvOBWnDiarGxiawlZyZS6fvd2WZ4BOCA/0?wx_fmt=jpeg"
+                                                                class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                            <div class="invite_answer_list_item_head_content"><p
+                                                                    class="invite_answer_list_item_head_content_title">
+                                                                青团社
+                                                                <!----></p>
+                                                                <p class="invite_answer_list_item_head_content_desc">
+                                                                    <span class="invite_answer_list_item_head_content_desc_item">1519 回答</span>
+                                                                    <!----></p></div>
+                                                        </div>
+                                                        <div class="invite_answer_list_item_foot"><!----><a
+                                                                href="javascript:;"
+                                                                class="btn btn_main green_btn_invite">邀请</a></div>
+                                                    </li>
+                                                    <li class="invite_answer_list_item">
+                                                        <div class="invite_answer_list_item_head"><span
+                                                                class="invite_answer_list_item_head_avatar"><a
+                                                                href="/community/personal/oCJUsw8yFnOFj4STQDwbDwK8ix_0"
+                                                                class="" target="_blank"><img
+                                                                src="https://wx.qlogo.cn/mmhead/KgjicalZqCFmKVVcXqqXEjExUKTddEGCgFpjSjk9S844/0"
+                                                                class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                            <div class="invite_answer_list_item_head_content"><p
+                                                                    class="invite_answer_list_item_head_content_title">
+                                                                Memory
+                                                                <!----></p>
+                                                                <p class="invite_answer_list_item_head_content_desc">
+                                                                    <span class="invite_answer_list_item_head_content_desc_item">7356 回答</span>
+                                                                    <!----></p></div>
+                                                        </div>
+                                                        <div class="invite_answer_list_item_foot"><!----><a
+                                                                href="javascript:;"
+                                                                class="btn btn_main green_btn_invite">邀请</a></div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div><!----></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="post_box_others">
+                    <div class="block-list public_box detail_extend">
+                        <!-- <div class="block-list__title detail_extend_hd">相关图片</div> -->
+                        <div class="detail_extend_bd">
+                            <div class="comment_reply_input_box__extend__editor__item comment_reply_input_box__extend__editor__area__image">
+                                <div class="comment_reply_input_box__extend__editor__item__head"
+                                     v-html="'添加图片('+uploaded_pic_list.length+'/9)'">
+                                </div>
+                                <div class="comment_reply_input_box__extend__editor__item__body">
+                                    <div class="frm_control_group frm_control_group_upload_images">
+                                        <div class="frm_controls frm_vertical_pt">
+                                            <div class="weui-desktop-upload">
+                                                <div class="weui-desktop-upload__imgs__wrp">
+                                                    <ul class="weui-desktop-upload__imgs">
+                                                        <!-- 关联的图片列表 -->
+                                                        <li class="weui-desktop-upload__file weui-desktop-upload__file_image-holder"
+                                                            v-for="item in uploaded_pic_list">
+                                                            <div class="weui-desktop-image-holder__wrp">
+                                                                <i class="weui-desktop-image-holder__preview"
+                                                                   :style="'background-image: url(\''+item.url+'\');'"></i>
+                                                                <span class="weui-desktop-image-holder__mask">
+                                                                <a @click="delete_pic(item.id)"
+                                                                   class="weui-desktop-icon__delete">删</a></span></div>
+                                                        </li>
+                                                    </ul>
+                                                    <a v-if="uploaded_pic_list.length<9"
+                                                       class="weui-desktop-upload__img__btn uploader_btn_outer webuploader-container">
+                                                        <div class="uploader_btn_inner webuploader-pick">
+                                                            <i class="weui-desktop-icon__add"></i>
+                                                            <div class="weui-desktop-upload__img__btn__title">
+                                                                上传图片
+                                                            </div>
+                                                        </div>
+                                                        <div id=""
+                                                             style="position: absolute;inset: 0px auto auto 0px;width: 100%;height: 100%;overflow: hidden;">
+                                                            <input type="file" multiple="multiple" name="file"
+                                                                   onchange="postData()" id="uploadImage"
+                                                                   accept=".bmp,.png,.jpeg,.jpg,.gif"
+                                                                   style="opacity: 0;cursor: pointer;height: 100%;width: 100%;">
+                                                            <!--                                                            <label style="opacity: 0; width: 100%; height: 100%; display: block; cursor: pointer; background: rgb(255, 255, 255);"></label>-->
+                                                        </div>
+                                                    </a></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>-->
+<!--<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>-->
+
+<script>
+    var text = $('#id_content').html();  //"#被骗了 #javascript #你好 Tutorial";
+    if (text != '') {
+        var res = text.replace(/(#\S+ )/g, "<a href='/talk/tag?k=$1'>$1</a>");
+        console.log(res)
+        $('#id_content').html(res);
+    }
+
+    function postData() {
+        var formData = new FormData();
+        formData.append("file", $("#uploadImage")[0].files[0]);
+        $.ajax({
+            url: "/photo/upload",
+            type: "post",
+            data: formData,
+            headers: {_type: 1, sid: checkLogin()},
+            processData: false, // 告诉jQuery不要去处理发送的数据
+            contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+            dataType: 'text',
+            success: function (data) {
+                var params = JSON.parse(data)
+                // console.log(params)
+                edit_vue.$data.uploaded_pic_list.push({id: params.data.id, url: params.data.url})
+            },
+            error: function (data) {
+
+            }
+        });
+    }
+
+    //赋值变量
+    // var basePath = getContextPath();
+    //
+    // // 获取项目路径
+    // function getContextPath() {
+    //     var pathName = window.document.location.pathname;
+    //     var projectName = pathName.substring(0, pathName.substr(1).indexOf(
+    //         '/') + 1);
+    //     return projectName;
+    // }
+
+</script>
+<script>
+
+    // const editor = new toastui.Editor({
+    //     el: document.querySelector('#editor'),
+    //     previewStyle: 'vertical',
+    //     height: '500px',
+    //     initialValue: ''
+    // });
+
+
+    var edit_vue = new Vue({
+        el: "#body",
+        data: {
+            search_tag_list: [],   // 话题标签列表来自搜索
+            list_tag: [],   // 话题标签列表
+            uploaded_pic_list: [], // 已上传图片列表
+            is_show_invite_panel: false,
+            can_be_run: true,
+            new_tab_value: '',
+            is_add_topic: false,
+
+            is_saveing: false,
+
+            search_tag_wait_time: 500,
+
+            search_tag_value_change_times: 0,
+        },
+        created: function () {
+
+        },
+        computed: {},
+        watch: {
+            new_tab_value: {
+                handler: function (f) {
+                    if (f == '') {
+                        this.search_tag_list = []
+                    }
+                    this.search_tag_value_change_times++
+                    let self = this
+                    setTimeout(function () {
+                        self.search_tag_value_change_times--
+                        var formData = {val: f}
+                        if (self.search_tag_value_change_times < 1) {
+                            $.ajax({
+                                url: "/talk/tag_search",
+                                type: "post",
+                                data: formData,
+                                headers: {sid: checkLogin()},
+                                dataType: 'json',
+                                success: function (res) {
+                                    console.log(res)
+                                    if (res.code == 0) {
+                                        self.search_tag_list = res.data
+                                    }
+                                },
+                                error: function (res) {
+                                    console.log(res)
+                                }
+                            });
+                        }
+                    }, 300)
+                },
+                deep: false
+            }
+        },
+        methods: {
+            checkDuplicated(id) { // 检查id是否重复添加标签
+                for (const listTagKey of this.list_tag) {
+                    if (listTagKey.id == id)
+                        return true
+                }
+                return false
+            },
+            tagClick(id, title) {
+                if (this.checkDuplicated(id)) {
+                    showAlertPanel('重复添加话题标签：' + title)
+                    return
+                }
+                this.list_tag.push({id, title})
+                this.new_tab_value = ''
+                this.search_tag_list = []
+            },
+            newTag() { // 监听回车按键，添加新的标签
+                if (this.search_tag_list.length > 0) {
+                    let id = this.search_tag_list[0].id
+                    let title = this.search_tag_list[0].title
+                    if (this.checkDuplicated(id)) {
+                        showAlertPanel('重复添加话题标签：' + title)
+                        return
+                    }
+                    this.list_tag.push({id, title})
+                    this.new_tab_value = ''
+                    this.search_tag_list = []
+                }
+            },
+            close_invite_panel() { // 关闭邀请面板
+                this.is_show_invite_panel = false
+            },
+            show_invite_panel() { // 关闭邀请面板
+                this.is_show_invite_panel = true
+            },
+            start_edit_topic_tag() { // 开始编辑话题
+                this.is_add_topic = !this.is_add_topic
+            },
+            upload_pic() { // upload a picture
+
+            },
+            save() { // save
+                if (!this.is_saveing) {
+                    this.is_saveing = true
+                    let formData = {
+                        content: $('#id_content').val(),
+                        photo: JSON.stringify(this.uploaded_pic_list),
+                        list_tag: JSON.stringify(this.list_tag),
+                    }
+                    let self=this
+                    $.ajax({
+                        url: "/talk/ajaxSave",
+                        type: "post",
+                        data: formData,
+                        headers: {sid: checkLogin(), 'Content-Type': 'application/x-www-form-urlencoded'},
+                        // processData: false, // 告诉jQuery不要去处理发送的数据
+                        // contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.code=='0'){
+                                self.is_saveing=false
+                                console.log(data)
+                                location.reload()
+                            }else {
+                                showAlertPanel(res.msg)
+                            }
+                        },
+                        error: function (data) {
+
+                        }
+                    });
+                }
+
+            },
+        }
+    })
+</script>

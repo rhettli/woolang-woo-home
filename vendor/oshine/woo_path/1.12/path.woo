@@ -1,0 +1,113 @@
+local _m = {
+    --- 目录地址
+    _path = '',
+    --- 过滤列表
+    _filters = {},
+    ---查找到的文件
+    _finds = {},
+    --- 是否是文件，否则是文件夹
+    _isFile = false,
+    --- 是否存在
+    _isExists = false,
+
+    err = nil,
+}
+
+--- 初始化
+function _m:new(path)
+    path = path or _pwd()
+    self._path = path
+    return self
+end
+
+---@param path string@加入目录
+---@return self
+function _m:join(path, ...)
+    self._path = self._path .. '/' .. path
+    return self
+end
+
+-- 获取文件列表,只有目录才能调用
+function _m:ls()
+    _ls(self._path, function(v)
+        self._finds[#self._finds] = v
+    end, false)
+    return self
+end
+
+-- 删除
+--- @param isRmFind boolean@ 是否仅仅删除查找的文件
+function _m:rm(isRmFind)
+
+end
+
+-- 创建目录
+function _m:mkdir()
+    if not self._isExists then
+        -- 目录不存在，则创建目录
+        _mkdir(self._path)
+        self._isFile = false
+    end
+end
+
+-- 创建文件
+function _m:touch()
+    if not self._isExists then
+        -- 目录不存在，则创建目录
+        _file_save((self._path), {})
+        self._isFile = true
+    end
+end
+
+--- 获取文件列表
+---@param isDeep boolean@是否需要递归子目录
+function _m:find(isDeep)
+    if self._filters then
+        _ls(self._path, function(v)
+            self._finds[#self._finds] = v
+        end, isDeep)
+    end
+    return self
+end
+
+--- 过滤
+--- filters:
+--- size: >20MB
+--- ext: RE:.*woo
+--- mdf: time>2020-05-06 12:38:03
+--- mdf:
+---@path filters table
+function _m:filter(filters)
+    self._filters = filters
+    return self
+end
+
+-- 是否存在
+function _m:exists()
+    return self._isExists
+end
+
+-- 是否文件，否则文件夹，需要调用exists()来确认文件是否存在
+function _m:isFile()
+
+end
+
+-- 文件或目录更名
+---@param new_name string@新文件名
+function _m:rename(new_name)
+    --_mv()
+
+end
+
+-- 文件或目录更名
+---@param dir string@新文件名
+function _m:mv(dir)
+    _mv(self._path, dir)
+end
+
+-- 获取目录和文件总尺寸
+function _m:totalSize()
+
+end
+
+return _m

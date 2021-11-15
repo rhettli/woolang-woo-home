@@ -1,0 +1,25 @@
+local class_member = {}
+
+function class_member:new(o)
+    o = o or {}
+    return self
+end
+
+---获取口罩模型地址
+function class_member:get_obj()
+
+    --0 成人口罩模型，1 小孩口罩模型
+    local t = _http_params('type')
+    if not _in_array(t, { '1', '0' }) then
+        return self:renderJSON(nil, 'type error', -1)
+    end
+
+    local res = __model.mask_obj:findFirst({ conditions = 'type=:type: and status=:status:',
+                                             bind = { ['type'] = t, status = 1 } })
+
+    return self:renderJSON(res:toJson(), 'ok')
+end
+
+class_member = _extend(class_member, "controller/api/_base")
+
+return class_member.super[2](class_member)

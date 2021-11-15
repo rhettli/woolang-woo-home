@@ -1,0 +1,154 @@
+-- woo语言生成验证码Demo
+local m = {
+    ---保存位置
+    _path = '',
+    --- 绘制背景线段数量
+    _cpx = 10,
+    _dc = nil,
+    _str_fun = nil,
+    --- 0 三种字符，1只有大写字符，2只有小写字符，3只有数字
+    _str_type = nil,
+}
+
+function m:new(path, str_type, str_fun)
+    self._path = path
+    self._dc = woo.gd:new()
+    self._str_fun = str_fun
+    self._str_type = str_type or 0
+
+    return self
+end
+
+function m:create(W, H)
+    self._dc:create(W, H)
+    self.W = W
+    self.H = H
+end
+
+function m:draw(r, g, b)
+    r = r or 0
+    g = g or 0
+    b = b or 0
+
+    -- 红绿蓝取值 0-1（0-255）
+    self._dc:setRGB(r, g, b)
+    --self._dc:setRGB255(255,255,255)
+    self._dc:clear()
+
+    -- 随机数种子
+    _rand(_time())
+
+    for i = 0, self._cpx do
+        local x1 = _rand() * self.W
+        local y1 = _rand() * self.H
+        local x2 = _rand() * self.W
+        local y2 = _rand() * self.H
+        local w = _rand() * 4 + 1
+        self:setRdmColor()
+        self._dc:setLineWidth(w)
+        self._dc:drawLine(x1, y1, x2, y2)
+        self._dc:stroke()
+    end
+
+    -- 设置随机数种子
+    math.randomseed(_time())
+
+    local rStr = ''
+    local str = ''
+    for i = 1, 4 do
+        if self._str_fun then
+            str = self._str_fun()
+        end
+
+        if str == '' then
+            if self._str_type == 0 then
+                if _rand() < .3 then
+                    str = _chr(math.random(48, 57))
+                else
+                    str = _chr(_rand() < .5 and math.random(65, 90) or math.random(97, 122))
+                end
+            elseif self._str_type == 1 then
+                str = _chr(math.random(65, 90))
+            elseif self._str_type == 2 then
+                str = _chr(math.random(97, 122))
+            elseif self._str_type == 3 then
+                str = _chr(math.random(48, 57))
+            end
+
+        end
+
+        rStr = rStr .. str
+        self._dc:drawString(str, self. W / 5 * i, self. H / 2 + 10)
+        self:setRdmColor()
+        str = ''
+    end
+
+    self.rStr = rStr
+
+end
+
+--- 获取绘制到验证码值
+function m:code()
+    return self.rStr
+end
+
+--- 获取元数据
+function m:bytes()
+    return self._dc:bytes()
+end
+
+---保存图片到地址
+function m:save()
+    -- png文件保存到桌面gd.png
+    --local path = _home() .. '/Desktop/gd.png'
+    self._dc:savePng(self._path)
+end
+
+--- 获取到绘制结果字节集，可以不用保存到磁盘，直接发送给用户
+---
+--- 获取的字节集是png格式的，如果保存文件，请使用.png后缀名
+function m:bytes()
+    return self._dc:bytes()
+end
+
+function m:show()
+    _show(self._path)
+end
+
+--- 设置绘制字体
+--- @param path string
+--- @param size number
+--- @return boolean@是否设置成功
+function m:setFont(path, size)
+    if not path then
+        path = require('oshine/woo_captcha@1.?:path', true) .. '/font/Marker Felt.ttf'
+    end
+    if not size then
+        size = 28
+    end
+
+    if _file_exist(path) then
+        print(path, size, self._dc)
+        self._dc:loadFontFace(path, size)
+        return true
+    else
+        print('file not exists', path)
+        return false
+    end
+end
+
+function m:setColor(r, g, b, a)
+    self._dc:setRGBA(r, g, b, a)
+end
+
+function m:setRdmColor()
+    local a = _rand() * 0.5 + 0.5
+    self:setColor(_rand(), _rand(), _rand(), a)
+end
+
+--- 设置复杂度
+function m:setComplex(c)
+    self._cpx = c
+end
+
+return m

@@ -1,0 +1,11 @@
+local member = {
+    ---@return boolean
+    getTotal = function(p)
+
+
+        return true
+
+    end
+}
+
+_chan_put(false, member)

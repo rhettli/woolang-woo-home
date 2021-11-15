@@ -1,0 +1,16 @@
+{% local t=simple_form(mask_pic_diy, {}) %}
+
+{% t.select('mask_pic_group_id',{  label='所属组', collection = _render_model( 'mask_pic_group','id','name','#放入公海')  } ) %}
+
+{% t.select('status',{  label='状态' } ) %}
+
+
+
+{% t.input('remark',{  label='备注'} ) %}
+
+{% t.input('pic',{  label='印花图片' ,type='file'} ) %}
+
+
+
+{% t.submit('保存') %}
+{% t.render() %}

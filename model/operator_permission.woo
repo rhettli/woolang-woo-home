@@ -1,0 +1,21 @@
+-- 继承model
+
+local _M = { _model = 'operator_permission' }
+
+function _M:new()
+
+
+    return self
+end
+
+function _M:_beforeSave()
+    print('before save...')
+end
+
+function _M:_afterSave()
+
+    print('after save...')
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)

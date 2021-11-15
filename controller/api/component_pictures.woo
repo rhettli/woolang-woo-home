@@ -1,0 +1,20 @@
+local component_pictures = {}
+
+function component_pictures:list()
+    local id = _http_params('id')
+    if id == '13' then
+        local res = [[
+{"code":0,"data":[{"ID":7,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/sidebar1.png","ImageSm":"","ImageLg":"","Content":""},{"ID":8,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/sidebar2.png","ImageSm":"","ImageLg":"","Content":""},{"ID":9,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/sidebar3.png","ImageSm":"","ImageLg":"","Content":""},{"ID":10,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/bear_sidebar2.png","ImageSm":"","ImageLg":"","Content":""},{"ID":11,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/bear_sidebar1.png","ImageSm":"","ImageLg":"","Content":""},{"ID":18,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/Sidebar6.png","ImageSm":"","ImageLg":"","Content":""},{"ID":19,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/Sidebar7.png","ImageSm":"","ImageLg":"","Content":""},{"ID":20,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/Sidebar8.png","ImageSm":"","ImageLg":"","Content":""},{"ID":21,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/Sidebar9.png","ImageSm":"","ImageLg":"","Content":""},{"ID":22,"ZoneID":0,"CtrType":13,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/Sidebar10.png","ImageSm":"","ImageLg":"","Content":""}],"message":""}
+    ]]
+        _out(res)
+    end
+
+end
+
+function component_pictures:new()
+    return self
+end
+
+component_pictures = _extend(component_pictures, "controller/api/_base")
+
+return component_pictures.super[2](component_pictures)

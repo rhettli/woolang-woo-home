@@ -1,0 +1,38 @@
+#默认 8080
+port: 8009
+#默认 0.0.0.0
+host: 127.0.0.1
+
+type: http
+
+# 墨菲:  murphy-http
+
+# 访问的文件即使不是woo可执行文件也输出（不安全，建议使用static映射，当然整站都是静态页面就另当别论了）
+send_file: 0
+
+# static 为静态文件夹映射,有扩展名的则映射单个文件
+static_map:
+  /static: public/static
+  /favicon: public/static
+
+# 首页文件
+index: index.woo
+
+
+# 是否启用index_all，启用后所有的请求都将重定向到index.woo，index配置无效
+# 比如：/foo/bar/?op=list , 将重定向到 /index.woo?_url=/foo/bar/?op=list
+index_all: 1
+
+# 是否缓存woo代码,默认不缓存，1缓存，0|false不缓存，生产环境必须设置1,如果想热加载代码，可执行./reload.sh
+cache_code: 0
+
+# before running
+before_run: _before_run.woo
+
+thread_num: 400
+
+# log日志目录地址(系统缓存目录)，目前仅仅woo语言支持:${TEMP}
+log_path: info-murphy.log
+
+
+

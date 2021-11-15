@@ -1,0 +1,15 @@
+
+<form action="/admin/source" method="get" class="search_form" autocomplete="off" id="search_form">
+    <label for="id_eq">id</label>
+    <input name="city_position[id_eq]" type="text" id="id_eq"/>
+    <button type="submit" class="ui button">搜索</button>
+ </form>
+
+
+{% macro edit(op) %}
+用户Id:{{op.id}}
+<br/><a href="/admin/index/edit?id={{op.id}}" class='modal_action">编辑</a>
+
+{% /macro %}
+
+{% simple_table(operators, {id='ID', name='姓名',created_at_text='创建时间' ,edit='操作' }) %}

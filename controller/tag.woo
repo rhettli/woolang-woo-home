@@ -1,0 +1,19 @@
+local cls_tag = {}
+
+--- 根据标签查找相同的话题
+function cls_tag:find()
+    -- t 就是tag_id， todo 后面话题量上来量，需要把tag_id使用加密函数加密下，防止被爬虫爬取
+    local tag_id = _http_params('t')
+    if not tag_id then
+        print('err:not tag id')
+        return
+    end
+
+
+end
+
+cls_tag = _extend(cls_tag, "controller/_base")
+
+return cls_tag.super[2](cls_tag)
+
+

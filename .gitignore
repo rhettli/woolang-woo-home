@@ -1,0 +1,14 @@
+.idea
+.vscode
+.xml
+*.br
+*.gz
+*.log
+*.obj
+runtime/*
+.env
+.lan
+.woo_manual
+.DS_Store
+*.out
+static/upload/

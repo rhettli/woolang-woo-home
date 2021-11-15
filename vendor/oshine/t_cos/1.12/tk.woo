@@ -1,0 +1,92 @@
+local cls = { _host = 'sts.tencentcloudapi.com' }
+
+function cls:new(appid, buckey, region, secId, secKey)
+    self.appid = appid
+    self.buckey = buckey
+    self.region = region
+    self.secId = secId
+    self.secKey = secKey
+    return self
+end
+
+function cls:sign()
+
+end
+
+---发起请求
+---
+---比如想要使用get post put 操作 桶内的 music目录：req({'get','post','put'},3000,'/music')
+---@param actions table@ 动作，比如：{'get','post','put'}
+---@param duration number@ token的有效时间
+---@param dir@ 操作目录 ，可省略，默认为根目录/
+function cls:token(actions, duration, dir)
+    dir = dir or '/'
+
+    local method = 'POST'
+
+    if #actions > 0 then
+        for i, v in ipairs(actions) do
+            actions[i] = ('"name/cos:%sObject"'):format(v)
+        end
+    end
+
+    local action = _join(actions, ',')
+
+    local policy = '{"version":"2.0","statement":[{"action":[%s],"effect":"allow","resource":["qcs::cos:%s:uid/%s:%s%s"]}]}'
+    policy = policy:format(action, self.region, self.appid, self.buckey, dir)
+
+    policy = _url_encode(policy)
+
+    print('policy:===', policy)
+
+    _rand(_time())
+
+    local body = { form = {
+        DurationSeconds = duration,
+        Policy = policy,
+        Timestamp = _time(),
+        Nonce = _str_replace(_rand(), '.', ''),
+        Name = "cos-sts-woo",
+        Version = "2018-08-13",
+        Region = self.region,
+        SecretId = self.secId,
+        Action = "GetFederationToken"
+
+    } }
+
+    local keys = {}
+    for k, _ in pairs(body.form) do
+        keys[#keys + 1] = k
+    end
+    table.sort(keys)
+
+    local kv = ''
+    for _, k in pairs(keys) do
+        kv = kv .. ("&%v=%v"):format(k, body.form[k])
+    end
+
+    kv = _ltrim(kv, '&')
+
+    local source = method .. self._host .. "/?" .. kv
+
+    print(self.secKey .. '|')
+
+    local sign = _hmac(self.secKey, source, 128)
+
+    body.form.Signature = sign
+
+    --print('form:===', _json_encode(body.form))
+
+    local res, ok = woo.http:new():contentForm():body(body.form):request(method, "https://" .. self._host)
+
+    return res, ok
+
+end
+
+return cls
+
+
+
+
+
+

@@ -1,0 +1,74 @@
+local _M = {
+}
+-- redis or ssdb cache instance
+function _M:new(dbname, params)
+    if params and params.addr then
+        _G.__woo_mvc[dbname .. '_conn'] = params
+    else
+        params = _G.__woo_mvc[dbname .. '_conn']
+    end
+
+    self.rds = 0
+    self:_connect(params)
+    if not self.rds then
+        return nil
+    end
+
+    return self
+end
+
+--- 配置conf
+function _M.conf(params, dbname)
+    if dbname then
+        if not _in_array(dbname, { 'ssdb', 'redis' }) then
+            print('dbname must ssdb or redis.')
+            os.exit(-1)
+        end
+    end
+
+    assert(params.addr, 'params not contain addr.')
+    _data_put('$_woo_mvc_' .. dbname, params)
+end
+
+function _M:_connect(params)
+
+    local redis = woo.redis:new()
+
+    local res = redis:open(params.addr, params.addr.psw, params.addr.db)
+    if res then
+        self.rds = redis
+    else
+        self.rds = nil
+        --print('connect to redis fail')
+    end
+end
+
+-- only exec one times
+function _M:with(fc, isClose)
+    assert(type(fc) == 'function', 'with params #1 must a function.')
+
+    self.e, self.r = pcall(fc, self.rds)
+    if isClose then
+        return self:close()
+    end
+    return self
+end
+
+function _M:exec(...)
+    return self.rds:exec(...)
+end
+
+function _M:eval(...)
+    return self.rds:eval(...)
+end
+
+function _M:close()
+    if not self.rds then
+        return
+    end
+    local r = self.rds:close()
+    self.rds = nil
+    return r
+end
+
+return _M

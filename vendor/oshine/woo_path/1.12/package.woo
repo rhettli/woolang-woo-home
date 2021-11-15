@@ -1,0 +1,5 @@
+return {
+    package_name='oshine/woo_path'
+
+
+}

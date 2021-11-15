@@ -1,0 +1,51 @@
+--<xml>
+--<appid><![CDATA[wxdd4524c00789d5de]]></appid>
+--<bank_type><![CDATA[OTHERS]]></bank_type>
+--<cash_fee><![CDATA[1000]]></cash_fee>
+--<fee_type><![CDATA[CNY]]></fee_type>
+--<is_subscribe><![CDATA[N]]></is_subscribe>
+--<mch_id><![CDATA[1352608702]]></mch_id>
+--<nonce_str><![CDATA[d8a1b58ecee6f7295010]]></nonce_str>
+--<openid><![CDATA[o7dV45KIB34QjwqzShoIB2QPN12k]]></openid>
+--<out_trade_no><![CDATA[cfa2d064936d1482d468e807ded0ecc7]]></out_trade_no>
+--<result_code><![CDATA[SUCCESS]]></result_code>
+--<return_code><![CDATA[SUCCESS]]></return_code>
+--<sign><![CDATA[9289302DE97963249698769773FAD6B2]]></sign>
+--<time_end><![CDATA[20211006080931]]></time_end>
+--<total_fee>1000</total_fee>
+--<trade_type><![CDATA[JSAPI]]></trade_type>
+--<transaction_id><![CDATA[4200001188202110060436741920]]></transaction_id>
+--</xml>
+
+
+local xmlPaser = require('xml'):new()
+
+local xml = _cat('txt.xml', true)
+
+local xmlObj = xmlPaser:ParseXmlText(xml)
+
+
+--print(x.body["@one"])
+--print(x.body.nine["@ten"])
+--print(x.body.data:value())
+--print(x:children()[1]:name()   )
+
+--print(x:properties()[1] == {name = "one", value = "two"})
+
+print(xmlObj.xml.return_code:value())
+
+local childObj = xmlObj.xml:children()
+local i = 1
+while true do
+
+    local node = childObj[i]
+    if node == nil then
+        break
+    end
+    local name = node:name()
+    local val = node:value()
+    print(name, val)
+    i = i + 1
+end
+
+--print(xmlObj:children()[1]:children()[1]:value())

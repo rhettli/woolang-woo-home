@@ -1,0 +1,1 @@
+{% include "admin/product_channels/form.volt" %}

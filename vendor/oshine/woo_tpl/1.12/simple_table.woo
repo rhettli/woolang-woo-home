@@ -1,0 +1,128 @@
+--[ 'admin', device ], ['class':'ajax_model_form']
+
+return function(data1, macro1, obj, params)
+    local macro = _json_decode(_base64_decode(macro1))
+    local data = {}
+    local page
+    local per_page
+    local total = 0
+    if data1[obj] and data1[obj].entry then
+        data[obj] = data1[obj].entry
+        page = data1[obj].page
+        per_page = data1[obj].per_page
+        total = (data1[obj].total or 0) * 1
+    end
+
+
+    --_out('---------macro:', macro.edit)
+    --_out('---------data1:', page, per_page, total, data)
+    --_out('---------obj:', obj)
+    --_out('---------params:', params)
+    --_out('---------data:', data)
+
+    local pagination = ''
+    if total > 0 then
+        local url = _http_request('uri')
+        --print('----------url---------',url)
+        url = _str_split(url, '=')
+        if #url<2 then
+            url=url[1]
+        else
+            url = _str_split(url[1], '?')[1]
+        end
+
+        pagination = [[
+<nav><ul class="pagination"><li class="disabled">
+<a href="#">共%s页 共%s项</a></li>
+%s
+%s
+%s
+%s
+%s
+<li>跳到<form class="page_form" method="get" style="display: inline;" action="]] .. url .. [[?" autocomplete="off">
+<input name="page" type="text" style="width: 40px; height: 35px;">页</form></li>
+</ul></nav>
+]]
+        local last_page_index = math.floor(total / per_page)
+
+        local first_page = ''
+        local page_item = '';
+        local to_previous = ''
+        local to_back = ''
+        local last_page = ''
+
+        if page ~= 1 then
+            first_page = '  <li><a href="' .. url .. '?page=1" class="item">首页</a></li>'
+        end
+        if page > 1 then
+            to_previous = '<li><a class="previous" href="' .. url .. '?page=' .. (page - 1) .. '">前一页</a></li>'
+        end
+        if page ~= last_page_index then
+            last_page = '<li><a href="' .. url .. '?page=' .. last_page .. '" class="item"> 最后页</a></li>'
+        end
+        if page < last_page_index then
+            to_back = '<li><a class="next" href="' .. url .. '?page=' .. (page + 1) .. '">后一页</a></li>'
+        end
+
+        --32
+        local active = ''
+        for i = 0, 10, 1 do
+            if i == 0 then
+                active = ' class="active"'
+            else
+                active = ''
+            end
+            page_item = page_item .. '<li' .. active .. '><a href="' .. url .. '?page=' .. (i + page) .. '" class="item">' .. (i + page) .. '</a></li>'
+        end
+
+        pagination = string.format(pagination, last_page_index, total, first_page, to_previous, page_item, to_back, last_page)
+    end
+
+    local thread_tr_list = ""
+    for i, v in pairs(params) do
+        thread_tr_list = thread_tr_list .. '<th id="column_' .. i .. '" data-field="' .. i .. '">' .. v .. '</th>'
+    end
+
+    local body = [[<table class="table table-striped table-condensed table-hover">
+    <thead>
+    <tr>%s</tr>
+</thead>
+<tbody id="partner_list">
+%s
+</tbody>
+</table>
+]]
+
+
+    local tbody_tr_list = ""
+    for j, t in pairs(data[obj]) do
+        local tbody_tr = '<tr id="partner_6"> %s </tr>'
+        local td_list = ""
+        for i, _ in pairs(params) do
+            --out('it+', j, i)
+            --print('***************', _json_encode(macro[i] or {}), i)
+            if _is_valid(macro[i]) and macro[i].param and macro[i].code then
+                --print('--------macro valid-----------')
+                --print('FUNC:====================0', macro[i].param,macro[i].code)
+                local func = 'return function(' .. macro[i].param .. ')return ' .. macro[i].code .. ' ;end'
+                --print('FUNC:====================11', func)
+
+                local res = loadstring(func)()
+                local err, r = pcall(res, t)
+
+                --print('FUNC:====================22', err, r, func)
+                --print('FUNC:====================33',t.id,t.package_name,t.name)
+
+                td_list = td_list .. '<td>' .. r .. '</td>'
+            else
+                td_list = td_list .. '<td>' .. (t[i] or '') .. '</td>'
+            end
+        end
+        tbody_tr = string.format(tbody_tr, td_list)
+        tbody_tr_list = tbody_tr_list .. tbody_tr
+    end
+
+    body = string.format(body, thread_tr_list, tbody_tr_list)
+    _out(pagination .. body)
+end
+

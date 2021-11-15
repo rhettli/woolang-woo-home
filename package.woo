@@ -1,0 +1,93 @@
+---@author liyanxi
+---@language woo
+
+return {
+
+    run = {
+        dev = 'woo ./ -t http',
+        ['dev-cache'] = 'woo ./ -t http -cc 1',
+    },
+
+    -- Attention:move mouse to key,you will get information about this key|鼠标移动到key上，将会有提示信息弹出
+
+    --- package_name means your will be install with this name,eg:wpm install (package_name) | 包名称，用户可以使用这个名称来安装
+    ---
+    --- package_name must like :(your user name)/(package name) | 包名称必须形似：【你的用户名】/【包的名称】
+    ---
+    --- [click here to register (your name)](https://coder.wooyri.com/reg)  | [点击这里注册你的用户](https://coder.wooyri.com/reg)
+    package_name = 'oshine/murphy',
+
+    --- where to install self | 本包安装在哪里?
+    ---
+    --- auto  global  download
+    ---
+    --- global:install in global package path | global:安装到全局lib目录,一般是~/wpm
+    ---
+    --- local:install in project path | local：安装在当前项目vendor目录内
+    ---
+    --- download:just download,not install | download:仅仅下载不安装
+    ---
+    --- default install local,if you export a port or add some folder to env,you must set global
+    self_install = 'global',
+
+    --- add folder to env,make sure all in it can be execute anywhere.
+    ---
+    --- 添加目录到环境变量，使得其中的可执行文件可以在任何地方直接运行
+    -- add_path='cmd',
+    -- add_env={APP_PATH='./**'},
+
+    --- export cmd ,and you can run it anywhere,cmd must in cmd folder
+    -- export_cmd='wpm',
+
+    -- 开发测试时候需要用到的包，发布后别人安装此包不会安装dev-dependencies内的包
+    ['dev-dependencies'] = {
+
+    },
+
+    --- ? means latest version,or 1.2? you will install latest about 1.2*|? 表示安装最新版本，1.2?安装1.2*的最新版
+    dependencies = function(language)
+        return {
+            ['baiye/t_xcx'] = '1.?|local',
+            ['baiye/t_cos'] = '1.?|local',
+            ['baiye/t_sms'] = '1.?|local',
+            ['baiye/woo_captcha'] = '1.?|local',
+            ['baiye/woo_sql'] = '1.?|local',
+
+            ['oshine/woo_tpl'] = '1.?|local',
+            ['oshine/woo_mvc'] = '1.?|local',
+            ['oshine/woo_path'] = '1.?|local',
+            ['oshine/woo_any_type'] = '1.?|local',
+            ['oshine/woo_args_capture'] = '1.?|local',
+            [('oshine/woo_manual_%s'):format(language)] = '1.?|download', -- download woo manual|下载woo用户手册
+        }
+    end,
+
+    --- use 'all' to support all platform or use 'windows drawn linux' to support windows mac linux platform
+    ---
+    --- 使用 'all' 来支持所有平台，或者 'windows drawn linux' 来支持windows mac linux
+    platform = 'all',
+
+    --- use 'all' to support all arch ,or 'amd64 x86_64' to support amd64 x86_64
+    --- 使用 'all' 来支持所有 arch ,或者 'amd64 x86_64' 来支持 amd64 x86_64 平台
+    --- other position:amd64 x86_64 arm arm64 ...
+    arch = 'all',
+
+    --- add remark of this package
+    remark = {
+        ['en'] = 'A web development framework for all wooer',
+        zh = '标准的mvc web开发框架'
+    },
+
+    --- every package need a title|给包起个名字吧
+    title = 'murphy-(Web framework for woo)',
+
+    --- which woo version can run this website
+    woo_ver = '1.1?'
+}
+
+
+
+
+
+
+

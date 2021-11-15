@@ -1,0 +1,119 @@
+local _M = {
+    _model = 'member'
+}
+
+function _M:new(o)
+    o = o or {}
+    --setmetatable(o, self)
+    --self.__index = self
+    -- use for edit page:/admin/member/edit
+
+    self.SEX_TEXT = { [0] = '未知', [1] = '女', [2] = '男' }
+    self.STATUS_TEXT = { [0] = '待审核', [1] = '正常', [2] = '小黑屋被禁用' }
+
+    return self
+end
+
+---给小程序用的
+function _M:toSimpleJson()
+    return {
+        id = self.id,
+        nickname = self.nickname,
+        email = self.email,
+        sid = self.sid
+    }
+end
+
+--- 创建新的sid
+function _M:newSid()
+    local c = self.id .. '.' .. _md5(_time(true) .. '.')
+    self.sid = c
+end
+
+---用户是否被禁用
+function _M:isForbidden()
+    return self.status == 0
+end
+
+--- 注册用户使用open_id和union_id
+function _M:regXcxOpenId(opt)
+    for i, v in pairs(opt) do
+        self[i] = v
+    end
+
+    self:save()
+
+    self:newSid()
+
+    return self
+end
+
+function _M:_beforeSave()
+    print('before save...')
+end
+
+function _M:_afterSave()
+
+    print('after save...')
+end
+
+function _M:_queGetTotal()
+
+    print('after save...')
+end
+
+-- 保存sid到redis缓存
+---@param isRefresh boolean@是否刷新sid时间
+function _M:saveRds(isRefresh)
+    if isRefresh then
+        self.sid = _sub_ex('ne', self.sid, '.') .. (_time() + 86400)
+    end
+    local rds = __REDIS_CACHE0()
+    rds:with(function()
+        rds:exec('SADD', '$_sid_' .. self.id, self.sid)
+        -- 延长整个sid列表过期时间
+        rds:exec('EXPIRE', '$_sid_' .. self.id, 86400 + 120)
+    end, true) -- true 自动关闭redis
+end
+
+function _M:logout()
+    local rds = __REDIS_CACHE0()
+    rds:with(function()
+        rds:exec('SREM', '$_sid_' .. self.id, self.sid)
+    end, true) -- true 自动关闭redis
+end
+
+function _M:generateSid()
+    -- sid有效时间1天
+    self.sid = self.id .. '.' .. _uuid() .. '.' .. (_time() + 86400)
+    return self
+end
+
+---注册用户使用微信小程序的openid
+function _M:registerForWxOpenId(opts)
+    for i, v in pairs(opts) do
+        self[i] = v
+    end
+    self:save()
+    return self
+end
+
+function _M:getAvatar()
+    return self.avatar
+end
+
+function _M:toJson()
+    return {
+        id = self.id,
+        sid = self.sid,
+        username = self.username,
+        nickname = self.nickname,
+        avatar = self.avatar,
+        words = self.words,
+        email = self.email
+    }
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)
+

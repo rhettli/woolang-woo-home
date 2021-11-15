@@ -1,0 +1,32 @@
+local cls_sms_his = {}
+
+function cls_sms_his:new(o)
+    o = o or {}
+    return self
+end
+
+--- 发送验证码
+function cls_sms_his:send()
+    local mobile = _http_params('mobile')
+    -- 需要鉴权，发送验证码之后60秒内不能重发
+    local ip = _http_params('ip')
+
+    --查询当前手机匹配当前ip地址近60秒内是否已经发送过验证码，如果已经发送过，那么禁止发送
+    local sms_rec = __model.sms_his:findFirst({ conditions = 'ip=:ip: and mobile=:mobile: and created_at < :time:',
+                                                bind = { ip = ip, mobile = mobile, time = _time() + 60 } })
+
+    if sms_rec then
+        return self:rendJson('验证码发送过于频繁')
+    end
+
+    local code = ''
+
+    return self:rendJson(code)
+
+end
+
+cls_sms_his = _extend(cls_sms_his, "controller/api/_base")
+
+return cls_sms_his.super[2](cls_sms_his)
+
+--return _extend(class_member, "controller.api.base")

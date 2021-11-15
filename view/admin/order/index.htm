@@ -1,0 +1,34 @@
+
+<form action="/admin/order/index" method="get" class="search_form" autocomplete="off" id="search_form">
+    <label for="id_eq">Id</label>
+    <input name="device[id_eq]" type="text" id="id_eq"/>
+
+    <label for="device_no">ver</label>
+    <input name="device[device_no_eq]" type="text" id="device_no"/>
+
+    <button type="submit" class="ui button">搜索</button>
+ </form>
+
+
+{% macro picc(op) %}
+<img style='width:80px;' src=''/>
+
+{% /macro %}
+
+
+{% macro edit(op) %}
+<a href="/admin/order/edit?id={{op.id}}" class='modal_action'>编辑</a><s> </s>
+<a href="/admin/order/delete?id={{op.id}} ">删除此订单</a>
+{% /macro %}
+
+{% macro members(od) %}
+发起用户：{{od.member.nickname}} <br/>
+收件人：{{od.addr_name}}<br/>
+收件人手机：{{od.addr_phone}}<br/>
+收件人地址：{{od.addr_addr}}<br/>
+备注：{{od.remark}}<br/>
+{% /macro %}
+
+
+{% simple_table(orders, {id='ID', picc='使用印花图片',members='用户信息',status_text='订单状态',style_text='订单状态',number='数量',
+product_name='订单名',payment_no='付款订单号',payed_at='付款时间',cny_amount='付款金额（¥）',created_at_time='创建时间' , edit='操作' }) %}

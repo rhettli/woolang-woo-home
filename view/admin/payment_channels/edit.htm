@@ -1,0 +1,1 @@
+{% include "admin/payment_channels/form.volt" %}

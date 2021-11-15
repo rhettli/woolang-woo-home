@@ -1,0 +1,241 @@
+local _ACCESS_METHOD = _ACCESS_METHOD
+
+---api 基础类，用于鉴权，基础controller配置
+---@author LiYanXi
+---@language woo
+---@class _base
+local cls_base = {
+    --- 跳过鉴权的router
+    skip_router = {
+        index = { 'index', 'code', },
+        zh = { 'index' },
+    },
+    --- 是否缓存模版数据
+    cache_tmp = _CACHE_TMP
+}
+
+function cls_base:isAjax()
+    return _http_header('x-requested-with') == 'XMLHttpRequest'
+end
+
+function cls_base:init()
+    self:view('title', 'The woo Programming language.')
+end
+
+function cls_base:new()
+    -- 以ajax开头的方法必须
+    if _begin_with(_ACCESS_METHOD, 'ajax') then
+        if not self:isAjax() then
+            _out('ajax must')
+            assert(false, 'request ajax error')
+        end
+    end
+
+    if _begin_with(_ACCESS_METHOD, '_') then
+        _out('access denied')
+        assert(false, 'can not access method ' .. _ACCESS_METHOD)
+    end
+
+    if not self:checkRouter() then
+        print('router check fail')
+        if not self:checkAuth() then
+            -- -2 表示未登录，需要登陆
+            self:renderJSON(nil, 'Auth Fail.', -2)
+            assert(false, 'auth fail exit')
+            --os.exit(0)
+        end
+    end
+
+    local l = self.super[1](self)
+
+    return l
+end
+
+--- enable this function ,you must config redis in conf/conf.lua [检查某个key是否达到足够的total次数，在in_second秒内]
+function cls_base:checkEnoughTimes(key, total, in_second)
+    local ch = __REDIS_CACHE0()
+    if ch then
+        key = '__check_lock' .. key
+        total = total or 50
+        in_second = in_second or 5
+        local r = ch:exec('get', key)
+        if r == nil then
+            local res = ch:exec('SETEX', key, in_second, 1)
+            --print('set to cache:', res)
+        else
+            if tonumber(r) > total then
+                return true
+            end
+            local res = ch:exec('incr', key)
+            --print('set to cache:', res)
+            return false
+        end
+    end
+    print('Call check,must config [redis0] at conf/conf.woo')
+    return true
+end
+
+function cls_base:currentMemberId()
+    if self._sid1 then
+        return self._sid1
+    end
+    local sid = _str_split(_http_header('sid'), '.')
+    if sid[1] then
+        --sid[1] = tonumber(sid[1])
+        self._sid1 = sid[1]
+        return sid[1]
+    end
+end
+
+-- sid支持多端登录，使用redis存储
+function cls_base:checkAuth()
+    local sid = _http_header('sid')
+    --print(sid)
+    if sid then
+        local sp = _str_split(sid, '.')
+
+        if #sp ~= 2 then
+            return false
+        end
+
+        --local rds = __REDIS_CACHE0()
+        --local r = rds:exec('SISMEMBER', '$_sid_' .. member_id, sid)
+
+        local member = __model.member:findFirstBy('id', sp[1])
+
+        print(member.id, member.sid)
+        if _is_valid(member) and member.sid == sid then
+            self._sid1 = sid[1]
+            self._curr_member = member
+            return true
+        end
+
+        --if r then
+        --    -- 判断sid是否过期
+        --    if tonumber(sp[3]) < _time() then
+        --        -- 过期，主动清理
+        --        local r = rds:exec('SREM', '$_sid_' .. member_id, sid)
+        --        rds:close()
+        --        return false
+        --    end
+        --    rds:close()
+        --    return true
+        --end
+        --rds:close()
+    end
+    return false
+end
+
+--- show single page|单页面展示
+function cls_base:single()
+    self._single = true
+    return self
+end
+
+--- render a volt file
+function cls_base:render(tpl)
+    if not self._view then
+        self._view = require('oshine/woo_tpl@1.?:view'):new()
+    end
+
+    local ajax = _http_header('x-requested-with') == 'XMLHttpRequest' and 'ajax' or ''
+
+    -- ========= render start ===========
+    local tpl_dir = _DIR .. '/view/'
+
+    _http_header('Content-Type', 'text/html;charset=utf-8')
+
+    local f
+
+    local store_key = tpl
+
+    tpl = _str_replace(tpl, ".", "/") .. '.htm'
+
+    store_key = ajax .. store_key
+    f = _data_get(store_key)
+    if not f then
+
+        local view_file = tpl_dir .. tpl;
+        -- print('vf:===', view_file)
+        f = _cat(view_file, true)
+        if not f then
+            assert(false, 'view not exist:' .. view_file)
+        end
+
+        if not self._single then
+            -- only not single page,it can show parent frame
+            if '' == ajax and self.show_list ~= false then
+                local parent_tpl = tpl_dir .. '/layouts/' .. _sub_ex('n', tpl, '/') .. '.htm';
+                local admin_content = _cat(parent_tpl, true)
+                --admin_content = _str_split(admin_content, '{{#content#}}')
+                f = _str_replace(admin_content, "{{#content#}}", f, 1) -- admin_content[1] .. f .. admin_content[2]
+
+                -- store to cache
+
+            end
+        end
+
+        if self.cache_tmp then
+            _data_put(store_key, f)
+        end
+    end
+
+    -- 如果descr没有，则加上
+    if not self._view.view.descr then
+        self._view.view.descr = 'woo is a script language for people who want a clean script runtime'
+    end
+    self._view:render(f)
+end
+
+function cls_base:view(name, data)
+    if not self._view then
+        self._view = require('oshine/woo_tpl@1.?:view'):new()
+        self._view.view['title'] = _TITLE
+    end
+
+    self._view.view[name] = data
+
+    --print("====data====", _json_encode(self._view.view))
+
+    return self
+end
+
+function cls_base:checkRouter()
+    if self.skip_router then
+        for i, v in pairs(self.skip_router) do
+            local action = __STR_SUB_TO_LEFT(_ACCESS_FILE, '/')
+            --print('action:==', action)
+            --print(_ACCESS_FILE, _ACCESS_METHOD)
+            if action == i then
+                for _, p in pairs(v) do
+                    if p == _ACCESS_METHOD then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+function cls_base:currentMember()
+    if self._curr_member then
+        return self._curr_member
+    end
+    self._curr_member = _new_model('member'):findFirstBy('id', self:currentMemberId())
+    return self._curr_member
+end
+
+function cls_base:currentMemberId()
+    if self._sid1 then
+        return self._sid1
+    end
+    local sid = _str_split(_http_header('sid'), '.')
+    if sid[1] then
+        --sid[1] = tonumber(sid[1])
+        self._sid1 = sid[1]
+        return sid[1]
+    end
+end
+
+return _extend(cls_base, "oshine/woo_mvc@1.?:controller")

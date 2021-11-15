@@ -1,0 +1,12 @@
+
+
+<a href="/admin/operator_role/edit" class="modal_action">新建角色</a>
+
+
+
+{% macro edit(op) %}
+<a href="/admin/operator_role/edit?id={{op.id}}" class='modal_action'>编辑角色</a>
+<a href="/admin/operator_role/edit_permission?id={{op.id}}" class='modal_action'>编辑权限</a>
+{% /macro %}
+
+{% simple_table(operator_roles,{id='Id',name='角色名称',status_text='状态',created_at_time='创建时间',edit='编辑'}) %}

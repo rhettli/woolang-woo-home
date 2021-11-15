@@ -1,0 +1,36 @@
+local _M = {
+    _model = 'photo'
+}
+
+function _M:new()
+
+    self.STATUS_TEXT = { [0] = '待审核', [1] = '正常' }
+    self.TYPE_TEXT = { [1] = '话题上传', [2] = '举报上传' }
+
+    return self
+end
+
+---注册用户使用微信小程序的openid
+function _M:add(opts)
+    for i, v in pairs(opts) do
+        self[i] = v
+    end
+    self.status = 1
+    self:save()
+    return self
+end
+
+function _M:getUrl()
+    return '/static/upload/' .. self.path
+end
+
+function _M:toJson()
+    return {
+        id = self.id,
+        url = self:getUrl()
+    }
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)
+

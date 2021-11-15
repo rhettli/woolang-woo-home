@@ -1,0 +1,9 @@
+local _M = { model_name = 'feed_back' }
+
+
+
+
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

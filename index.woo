@@ -1,0 +1,8 @@
+
+
+package.path='@'.._DIR..'/vendor/?.woo' -- todo:ready in woo
+
+
+require('oshine/woo_mvc@1.?:index')({ 'conf/defined' })
+
+

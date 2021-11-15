@@ -1,0 +1,94 @@
+local _m = {
+    appid = nil,
+    secret = nil,
+    grant_type = 'authorization_code',
+
+    --- 微信官方错误码
+    ERROR_TYPE = { XCX_OK = 0,
+                   XCX_ILLEGAL_AES_KEY = -41001,
+                   XCX_ILLEGAL_IV = -41002,
+                   XCX_ILLEGAL_BUFFER = -41003,
+                   XCX_DECODE_BASE64_ERROR = -41004
+    }
+
+}
+
+function _m:new(appid, secret)
+    self.appid = appid
+    self.secret = secret
+
+    return self
+end
+
+---获取xcx微信token
+function _m:getToken()
+
+end
+
+--- 获取电话号码
+function _m:getPhoneNumber()
+
+end
+
+function _m:getUnionid(code)
+
+    if (not code) then
+        return nil
+    end
+    data = self:getSessionData(code)
+    if (not data) then
+        return nil
+    end
+
+    local unionid = data.unionid
+    return unionid
+end
+
+function _m:getOpenid(code)
+    if (not code) then
+        return nil
+    end
+
+    local data = self:getSessionData(code)
+    if (not data) then
+        return nil
+    end
+
+    local openid = data['openid']
+    return openid, data['unionid']
+end
+
+--- 获取微信session data
+---@param code string
+---@param fresh boolean
+function _m:getSessionData(code, fresh)
+
+    local url = 'https://api.weixin.qq.com/sns/jscode2session'
+
+    url = ('%s?appid=%s&secret=%s&grant_type=%s&js_code=%s'):format(url, self.appid, self.secret, self.grant_type, code)
+
+    local res, err = woo.http:new():request('GET', url)
+
+    print('get xcx openid,res:===', url, res.body, err)
+
+    if res.body ~= '' then
+        local session = _json_decode(res.body)
+
+        local errcode = session['errcode']
+        if (errcode) then
+            return nil
+        end
+
+        local openid = session['openid']
+
+        print(openid)
+
+        return session
+
+    end
+
+    return nil
+
+end
+
+return _m

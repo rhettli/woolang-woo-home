@@ -1,0 +1,728 @@
+local pairs = pairs
+local assert = assert
+local print = print
+local pcall = pcall
+local _escape = _escape
+local _is_valid = _is_valid
+local _json_decode = _json_decode
+local _json_encode = _json_encode
+local _rtrim = _rtrim
+local _file_exist = _file_exist
+
+local _import = _import
+local _new_model = _new_model
+local _DIR = _DIR
+
+--- model base
+--- properties begin with _ ,is private
+---@class model
+local M = {
+    ---数据库链接，有则不能主动关闭
+    _db = nil,
+    ---数据映射
+    _snap = {},
+    _json = {}
+}
+
+function M:new()
+
+    local _table = self._model
+
+    if not _table then
+        print('nod defined _model.')
+        return
+    end
+
+    --print('super model:====', _table, self._model)
+
+    local oo = {}
+
+    --    setmetatable(self,o)
+    --    self.__index = self
+
+    oo.__index = function(a, f)
+
+        --print('==index==:', f)
+        local arr = _str_split(f, '_')
+        local lens = #arr
+        local r
+
+        if 'id' == arr[lens] then
+            return
+        end
+
+        if #arr > 1 then
+            if arr[lens] == 'text' then
+                local filed = arr[lens - 1]
+                local item = tonumber(self[filed])
+                local v = self[_str_upper(_sub_ex('ne', f, '_')) .. '_TEXT']
+                if v then
+                    r = v[item or 1]
+                end
+
+                --print('text inner:', _str_upper(arr[lens - 1]) .. '_TEXT', _json_encode({ filed = filed, item = item }), _json_encode(r or {}))
+            elseif arr[lens] == 'array' then
+                r = self[_str_upper(_sub_ex('ne', f, '_')) .. '_TEXT']
+                --print('==index== array inner:', _json_encode(r))
+            elseif arr[lens] == 'time' then
+                local v = self[_sub_ex('ne', f, '_')]
+                r = v and _date('Y-m-d H:i:s', v) or ''
+                --print('time:==', o[join(table_sub_to_right(arr, lens - 1), '_')])
+
+                --elseif arr[lens] == 'model' then
+
+            elseif lens > 3 and arr[lens - 2] == 'sub' then
+                -- username_sub_0_12
+                r = _str_sub(self[_join(__TABLE_SUB_TO_RIGHT(arr, lens - 3), '_')], arr[lens - 1], arr[lens])
+            elseif lens > 2 and arr[lens - 1] == 'sub' then
+                -- username_sub_0
+                r = _str_sub(self[_join(__TABLE_SUB_TO_RIGHT(arr, lens - 2), '_')], 0, arr[lens - 1])
+            else
+                --local obj_id = o[join(table_sub_to_right(arr, lens - 1), '_') .. '_id']
+                --print('==index== obj:==', obj_id)
+                --if obj_id then
+                --    return _new_model(self._table):new():findById(obj_id)
+                --end
+            end
+        end
+
+        if not r then
+
+            local obj_id = self[f .. '_id']
+
+            if obj_id then
+                --local c = o['_c_' .. f]
+                --if c then
+                --    return c
+                --end
+
+                local m = _new_model(f):findById(obj_id) or {}
+
+                --o['_c_' .. f] = m
+                return m
+            end
+
+        end
+        --print('==index== __r:==', a, f, r)
+
+        return r
+    end
+
+    --print('==========create metadata before==========')
+
+    if _table then
+        self._table = _table
+        local metadata_file = _DIR .. '/runtime/metadata/' .. _table .. '.woo'
+        if not _file_exist(metadata_file) then
+            --print('==========create metadata==========', metadata_file)
+            local c = self._db or require('oshine/woo_mvc@1.?:db'):new()
+            if c._db ~= nil then
+                local fieldType = _import('oshine/woo_mvc@1.?:func/meta')
+                --  show create table
+                local tbl_struct = {}
+                --local ind = 1
+                pcall(function()
+                    c:query('desc `' .. _table .. '`', function(res_)
+                        local name = res_.Field
+                        --print('call back:', json_encode(res_), "\n")
+                        tbl_struct[name] = {}
+                        tbl_struct[name].type = fieldType(res_.Type)
+                        tbl_struct[name].name = name
+                    end)
+                end)
+                c:close()
+
+                if tbl_struct then
+                    local ser = 'return [[' .. _json_encode(tbl_struct) .. ']]'
+                    --_out(tbl_struct)
+                    local e = _file_save(metadata_file, ser)
+                    local ff = _DIR .. '/runtime/metadata'
+                    if not e and not _file_exist(ff) then
+                        print('write file fail,try to create folder and try again')
+                        _mkdir(_DIR .. '/runtime')
+                        local e1, r = _mkdir(ff)
+                        print('mkdir:==', e1, r)
+                        e1 = _file_save(metadata_file, ser)
+                        print('file_write again:==', e1)
+                        assert(e1, 'can not mkdir :' .. ff)
+                    end
+                end
+                print("sql id count:", tbl_struct)
+            else
+                print("connect mysql fail", err)
+            end
+
+            print('not exists:', _table)
+        end
+    end
+
+    --for i, v in pairs(self) do
+    --    if not o[i] then
+    --        o[i] = v
+    --    end
+    --end
+
+    -- setmetatable behind data transfer
+
+    setmetatable(self, oo)
+
+    return self
+end
+
+function M:checkValue(val, type_)
+
+    --print('checkValue:==', val, type(val), type_)
+
+    assert(type(val) ~= 'table', _json_encode(val))
+
+    if 'number' == type_ then
+        return tonumber(val)
+    elseif 'text' == type_ then
+        return '"' .. _escape(val or '') .. '"'
+    else
+        return '"' .. _escape(val or '') .. '"'
+    end
+end
+
+function M:metatable()
+    if self._metatable ~= nil then
+        return self._metatable
+    end
+
+    local rmt = _import('runtime.metadata.' .. self._table) -- json_decode(_file_get_contents(_DIR .. '/runtime/metadata/' .. self._table))
+    assert(rmt, 'metadata not find')
+    self._metatable = _json_decode(rmt)
+    return self._metatable
+end
+
+--- 获取老的数据快照
+function M:snap(filed)
+    return self._snap[filed]
+end
+
+function M:_doSave()
+    local metadata_file = self:metatable()
+    --out(metadata_file)
+    local insert = 'insert into `%s`(%s)values(%s)';
+    local field = ''
+    local values = ''
+    for key, v in pairs(metadata_file) do
+        if key ~= 'id' then
+            local val = self[key]
+            if val ~= nil then
+                field = field .. '`' .. key .. '`'
+                -- print(val, v.type)
+                values = values .. self:checkValue(val, v.type) --v.type
+                field = field .. ','
+                values = values .. ','
+            end
+        end
+    end
+
+    insert = insert:format(self._table, _rtrim(field, ','), _rtrim(values, ','))
+    --print(insert)
+
+    local db = self._db or require('oshine/woo_mvc@1.?:db'):new()
+    db:with(function(c)
+        c:query(insert, function(res_)
+            --out('call back:', res_, "\n")
+        end)
+        c:query('select last_insert_id() as id;', function(res_)
+            self.id = res_.id
+            --print('call back:', self['id'], "\n")
+        end)
+    end)
+    if not self._db then
+        db:close()
+    end
+    --self._snap = self
+    return true
+end
+
+function M:_doUpdate()
+    local metadata_file = self:metatable()
+    --out(metadata_file)
+    local update = 'update `%s` set %s where id=%s';
+    local field = ''
+    --local values = ''
+    for k, v in pairs(metadata_file) do
+        --print(k, v)
+        if k ~= 'id' then
+            --print("n o:==", self:checkValue(self[k], v.type), self:checkValue(self:snap(k), v.type))
+            local res = self:checkValue(self[k], v.type)
+            if res ~= self:checkValue(self:snap(k), v.type) then
+                field = field .. '`' .. k .. '`=' .. res .. ',' --v.type
+            end
+        end
+    end
+
+    if field == '' then
+        return true
+    end
+
+    update = update:format(self._table, _rtrim(field, ','), self.id)
+    --print('_doUpdate:==', update)
+
+    local db = self._db or require('oshine/woo_mvc@1.?:db'):new()
+    db:with(function(c)
+        c:query(update, function(res_)
+            --print('call back:', res_, "\n")
+        end)
+    end)
+
+    -- self._db==nil表示当前sql句柄不处理事务，可以关闭
+    if not self._db then
+        db:close()
+    end
+
+    local _reds = __REDIS_CACHE0()    -- _import('lib.redis'):new()
+    if _reds then
+        _reds:with(function(rds)
+            local r = rds:exec('EXPIRE', '__model_cache' .. self._table .. self.id, 0)
+            --print('EXPIRE:==', r)
+        end) :close()
+    end
+
+    if not e then
+        return false
+    end
+
+    return true
+end
+
+-- todo 插入的值要防止sql注入
+function M:save()
+    --    assert(obj, 'need self instance')
+
+    --print(' self.beforeSave:===', self.beforeSave)
+    if self.beforeSave then
+        self:beforeSave()
+    end
+
+    if _is_valid(self.id) then
+        self.updated_at = _time()
+        if not self:_doUpdate() then
+            return false
+        end
+    else
+        self.created_at = _time()
+        if not self:_doSave() then
+            return false
+        end
+    end
+
+    --print('asave:===', self.afterSave)
+    if self.afterSave then
+        self:afterSave()
+    end
+
+    return true
+end
+
+function M:_render(res_)
+    local mod = self:new(nil, self._table)
+    for k, p in pairs(res_) do
+        for i, v in pairs(self:metatable()) do
+            if v.name == k then
+                --out(v,k,p)
+                if 'number' == v.type then
+                    mod[v.name] = p * 1
+                elseif 'text' == v.type then
+                    mod[v.name] = p
+                else
+                    mod[v.name] = p
+                end
+            end
+        end
+    end
+    return mod
+end
+
+function M:findFirstById(id)
+    return self:findFirstBy('id', id)
+end
+
+function M:findFirstBy(filed, val)
+    assert(filed, 'findFirsBy params $1 empty')
+    assert(val, 'findFirsBy params $2 empty')
+    local binds = {}
+    binds[filed] = val
+
+    local ids = self:_query({ columns = 'id', conditions = filed .. "=:" .. filed .. ':', bind = binds })
+
+    local res = self:findByIds(ids)
+    if not res[1] then
+        return nil
+    end
+
+    local mod = _new_model(self._table)  --self:new(nil, self._table)
+
+    for i, v in pairs(res[1]) do
+        mod[i] = v
+    end
+
+    --print(_json_encode(mod))
+    --print('get status_text:==', mod.status_text)
+    --print(mod.__index({}, 'status_text'))
+    return mod
+end
+
+function M:delete()
+    if self.beforeDelete then
+        self:beforeDelete()
+    end
+
+    local db = self._db or require('oshine/woo_mvc@1.?:db'):new()
+    db:with(function(c)
+        c:query('delete from `' .. self._table .. '` where id=' .. self.id, function(res_)
+            out('delete call back:', res_, "\n")
+        end)
+    end)
+
+    if not self._db then
+        db:close()
+    end
+
+    if self.afterDelete then
+        self:afterDelete()
+    end
+    return true
+end
+
+function M:update()
+    return self:save()
+end
+
+--- 设置字段值为新的值
+---
+--- 比如：set('nickname','小明','age',23)
+--- @return self
+function M:set(...)
+    local p = { ... }
+    for i = 1, #p, 2 do
+        self[p[i]] = p[i + 1]
+    end
+    return self
+end
+
+function M:_toObj(ars)
+    --print(_json_encode(ars))
+    local rt = {}
+    for _, v in pairs(ars) do
+        if v then
+            local mod = _new_model(self._table)
+            mod._snap = v
+            --print('v:===',_json_encode(v))
+            for n, m in pairs(v) do
+                mod[n] = m
+            end
+            rt[#rt + 1] = mod
+        end
+    end
+    return rt
+end
+
+function M:findByIds(ids)
+    local prefix = self._table
+    local not_find_ids = {}
+    local rt = {}
+    local ids_list = ''
+
+    -- use redis cache or not
+    local _reds = __REDIS_CACHE0()
+
+    local fc = function()
+        if _reds then
+            --print("findByIds:==", _json_encode(ids))
+            for _, id in ipairs(ids) do
+                local res = _reds:exec('get', '__model_cache' .. prefix .. id)
+                --print('from redis:===', _json_encode(res))
+
+                if _is_valid(res) then
+                    rt[#rt + 1] = _json_decode(res)
+                else
+                    not_find_ids[id] = { i = #rt + 1 }
+                    rt[#rt + 1] = 0
+                    ids_list = ids_list .. id .. ','
+                end
+            end
+        else
+            print('Alert: not use redis cache,you must use redis for db cache to improve performance')
+            for _, id in ipairs(ids) do
+                not_find_ids[id] = { i = #rt + 1 }
+                rt[#rt + 1] = 0
+                ids_list = ids_list .. id .. ','
+            end
+        end
+
+        if ids_list ~= '' then
+            local second_finds = self:_query({ conditions = 'id in (' .. _rtrim(ids_list, ',') .. ')' })
+            if #second_finds > 0 then
+                for _, item in pairs(second_finds) do
+                    if _reds then
+                        local res = _reds:exec('SETEX', '__model_cache' .. prefix .. item.id, 7200, _json_encode(item))
+                        --print('set to cache:', res)
+                    end
+
+                    rt[not_find_ids[item.id].i] = item
+                end
+            end
+        end
+    end
+
+    pcall(fc)
+
+    if _reds then
+        _reds:close()
+    end
+
+    --print('findByIds:==============',_json_encode(rt))
+
+    return self:_toObj(rt)
+end
+
+function M:findById(id)
+    return self:findByIds({ id })[1] or {}
+end
+
+--分页查找
+function M:findP(cond, page, per_page)
+    per_page = per_page or 20
+    page = page or 1
+    if per_page > 10000 then
+        assert(false, 'you can not render too much rows')
+    end
+
+    local total_entries
+
+    if _is_valid(cond['conditions']) then
+        total_entries = self:_query({ columns = 'count(id) as num', conditions = cond['conditions'], bind = cond['bind'] });
+    else
+        total_entries = self:_query({ columns = 'count(id) as num' });
+    end
+    total_entries = total_entries[1].num
+
+    local offset = (page - 1) * per_page
+    local new_cond = _merge(cond, { columns = 'id', limit = { number = per_page, offset = offset } })
+    local ids = self:_query(new_cond)
+    local res = self:findByIds(ids)
+    --print("find_pagination:===", _json_encode(res))
+
+    return {
+        entry = res,
+        total = total_entries,
+        per_page = per_page,
+        page = page,
+        len = function()
+            return #res
+        end,
+        each = function(callBack)
+            assert(callBack, 'each need a callback func')
+            for i, v in pairs(res) do
+                callBack(i, v)
+            end
+        end
+    }
+end
+
+-- todo 是否需要去掉这行，findP在没有提示的情况下更容易书写
+M.findPagination = M.findP
+
+function M:count(cond)
+    return _import('oshine/woo_mvc@1.?:db'):new():withClose(function(c)
+        cond = cond or {}
+        local conditions = cond.conditions or ''
+        local bind = cond.bind
+        if bind and #bind > 0 then
+            for i, v in pairs(bind) do
+                conditions = _str_replace(conditions, ':' .. i .. ':', v)
+            end
+        end
+        if _is_valid(conditions) then
+            conditions = ' where ' .. conditions
+        end
+        local sql = 'select count(id) as num from ' .. self._table .. conditions
+        --print('count sql:' .. sql)
+        local num = 0
+        c:query(sql, function(res_)
+            num = res_.num
+        end)
+        c:close()
+        --print('count:==' .. num)
+        return num
+    end)
+end
+
+--  find all rows
+--  avoid use this function,you should use findPagination instead
+--  cond = { conditions = 'id>10 and created_at> :created_at: ', order = 'id desc', bind = { created_at = _time() } }
+function M:find(cond)
+    cond = cond or {}
+    local ids = self:_query({ conditions = cond.conditions, bind = cond.bind, columns = 'id' })
+    if ids and #ids > 0 then
+        local objs = self:findByIds(ids)
+        return objs
+    end
+    return nil
+end
+
+--  find first rows
+--  avoid use this function,you should use findPagination instead
+--  cond = { conditions = 'id>10 and created_at> :created_at: ', order = 'id desc', bind = { created_at = _time() } }
+function M:findFirst(cond)
+    cond = cond or {}
+    local ids = self:_query({ conditions = cond.conditions, bind = cond.bind, columns = 'id', limit = 1 })
+    if ids and #ids > 0 then
+        --print(_json_encode(ids))
+        local objs = self:findByIds(ids)
+        -- print(_json_encode(objs))
+        return objs[1]
+    end
+    return nil
+end
+
+function M:getDb()
+    local db
+    if self._db then
+        db = self._db
+    else
+        db = _import('oshine/woo_mvc@1.?:db'):new()
+    end
+    return db
+end
+
+function M:_query(cond)
+    if type(cond) ~= 'table' then
+        return
+    end
+
+    local conditions = cond.conditions or ''
+    local order = cond.order or ''
+    local bind = cond.bind
+    local limit = cond.limit or ''
+    local filed = cond.columns or '*'
+
+    print('find cond:==', _json_encode(cond))
+
+    if _is_valid(limit) then
+        if type(limit) ~= "table" then
+            limit = { number = limit, offset = 0 }
+        end
+        limit = ' limit ' .. tonumber(limit.offset) .. ',' .. tonumber(limit.number)
+    end
+    local res = {}
+
+    self:getDb():with(function(c)
+        --print('_is_valid(conditions) ===', _is_valid(conditions))
+        if _is_valid(conditions) then
+            if _is_valid(bind) then
+                --print('====================1')
+                local metadata_file = self:metatable()
+                for i, v in pairs(bind) do
+                    --print('+++++++++++++++++++', i, v)
+                    conditions = _str_replace(conditions, ':' .. i .. ':', self:checkValue(v, metadata_file[i].type))
+                end
+            else
+                --print('====================2')
+            end
+            conditions = ' where ' .. conditions
+        end
+
+        if _is_valid(order) then
+            order = ' order by ' .. _escape(order)
+        end
+
+        -- here just find id ,and resolve all data from redis
+        -- print('query:===', filed, self._table, conditions, order, _json_encode(limit))
+        local sql = 'select ' .. filed .. ' from `' .. self._table .. '` ' .. conditions .. order .. limit
+        print('Exec sql:==', sql)
+        if 'id' == filed then
+            c:query(sql, function(res_)
+                res[#res + 1] = res_.id
+            end)
+        else
+            c:query(sql, function(res_)
+                res[#res + 1] = res_
+                --print(_json_encode(res_))
+            end)
+        end
+    end, self._db == nil)
+
+    return res
+end
+
+-- db transaction start
+---@param func fun(sql_handler)
+function M:begin(func)
+    if not self._db then
+        self._db = _import('oshine/woo_mvc@1.?:db'):new()
+    end
+
+    self._db:query('begin;', function()
+    end)
+
+    local r, e = pcall(func, self._db)
+
+    if e then
+        -- 有错误，回滚数据
+        self._db:query('rollback;', function()
+        end)
+    else
+        self._db:query('commit;', function()
+        end)
+    end
+
+    -- anyway if it is success of callback function, close db always
+    self._db:close()
+    self._db = nil
+    return r, e
+end
+
+---@param sql_handler
+function M:with(sql_handler)
+    self._db = sql_handler
+    return self
+end
+
+--- 使用默认的add方法提交可，status默认为1，可以被覆盖
+function M:add(opts)
+    for i, v in pairs(opts) do
+        self[i] = v
+    end
+    if self.beforeAdd then
+        self:beforeAdd()
+    end
+    self.status = self.status or 1
+    print('status:===', self.status)
+    self:save()
+    return self
+end
+
+--- json输出加入数据
+------@return table
+function M:jsonAdd(k, v)
+    self._json[k] = v
+    return self
+end
+
+--- 到json，仅仅获取到表对应的结构
+------@return table
+function M:jsonAll()
+    local res = {}
+    for i, _ in pairs(self._snap) do
+        res[i] = self[i]
+    end
+    self._json = res
+    return self
+end
+
+--- 输出json
+------@return table
+function M:toJson()
+    if self.beforeToJson then
+        self:beforeToJson(self._json)
+    end
+    return self._json
+end
+
+return M

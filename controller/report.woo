@@ -1,0 +1,22 @@
+local cls_report = {}
+
+
+-- 编辑或新增
+function cls_report:edit()
+    local id = _http_params('id')
+    local talk = {}
+
+    self:view('talk', talk):render('index.report.edit')
+end
+
+-- 保存修改数据
+function cls_report:save()
+
+    local title, content = _http_params('title', 'content')
+
+    self:renderJSON()
+end
+
+cls_report = _extend(cls_report, "controller/_base")
+
+return cls_report.super[2](cls_report)

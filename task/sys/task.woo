@@ -1,0 +1,59 @@
+return {
+
+    _task = { zh = 'task任务工具类，可以新建新的任务', en = 'task tools，can add new task' },
+
+
+    --  --:task-end:find--
+
+    _add = { zh = '添加新的task,语法：woo murphy task add [member] [list] [remark]\n\t remark 可以是中英文数组，比如：woo murphy task new oim find "{zh=\'你好，这是一个任务\',en=\'hello this is a task\'}"',
+             en = 'add new task,syntax:woo murphy task add [member] [list] [remark]\n\t remark can be array,eg: woo murphy task new oim find "{zh=\'你好，这是一个任务\',en=\'hello this is a task\'}"' },
+    add = function(p, lan)
+
+        local f_name = _DIR .. '/task/' .. p[1] .. '.woo'
+        local fun = [[
+    --:task-begin:%s--
+    _%s=%s
+    %s=function(param, lan)
+    end,
+    --:task-end:%s--
+        ]]
+        if not p[3] then
+            p[3] = ('"%s"'):format(p[2])
+        elseif not _begin_with(p[3], '{') then
+            p[3] = ('"%s"'):format(p[3])
+        end
+
+        if p[1] and p[2] then
+            if _file_exist(f_name) then
+                local r = _cat(f_name, true)
+                -- 先判定是否已经存在此任务函数，存在则返回
+                if _re_match(r, p[2] .. '.*?function')[1] then
+                    _color('pre', ({ en = 'already contain this function:%s in file:%s', zh = '已经包含此函数:%s 在文件:%s' })[lan]:format(p[2], p[1] .. '.woo'), 'yellow')
+                    return
+                end
+
+                r = _rtrim(r, '\n ')
+                r = _str_sub(r, 0, #r - 1)
+                r = r .. fun:format(p[2], p[2], p[3] .. ',', p[2], p[2]) .. '\n}'
+                _out(_file_save(f_name, r))
+            else
+                local remark = [[
+-- 请勿删除 --:task-***:***-- 这类标志语句
+]]
+                remark = remark .. [[
+return {
+%s
+}
+                ]]
+
+                _out(_file_save(f_name, remark:format(fun:format(p[2], p[2], p[3] .. ',', p[2], p[2]))))
+            end
+        else
+            print('param illegal')
+        end
+    end,
+    _rm = { zh = '删除某个task,比如：woo murphy task rm member [任务名称]', en = 'delete task,eg:woo murphy task rm member [task name]' },
+    rm = function(p, lan)
+
+    end
+}

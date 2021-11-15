@@ -1,0 +1,22 @@
+local _M = {
+    model_name = 'operator_role'
+}
+
+-- here defined the operator permission item use []  (使用[]来定义一个权限)
+-- use P: I: (使用P: 开头表示权限类，I:开头表示权限类中的项目)
+
+-- [P:operator|角色管理]
+-- [I:update|更新]
+-- [I:create|新建]
+-- [I:edit|编辑页面]
+
+
+--<!-- f.select('status',{  label='状态', collection = { [2] ="无效" , [1] ="有效" } } ) -->
+
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)
+
+-- 不可以，最后到_M不是最新到对象，会出问题
+--return _extend(_M, "controller/admin/_base").super[2](_M)

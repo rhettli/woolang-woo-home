@@ -1,0 +1,8 @@
+local data = { {}, {} }
+
+for k, v in pairs(data) do ;
+
+    _out([[                        <p class="text-3xl text-gray-900 leading-none my-1">]]);
+    _out(v.report_name);
+
+end ;

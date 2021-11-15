@@ -1,0 +1,181 @@
+local cls_talk = {}
+
+-- 发帖 保存
+-- 一天之内一个人只能发3条讨论
+function cls_talk:ajaxSave()
+    local content = _http_params('content')
+    local photo = _http_params('photo')
+    local list_tag = _http_params('list_tag')
+
+    print(content, photo, list_tag)
+
+    local member_id = self:currentMemberId()
+    local talk = __model.talk:add({ content = content, member_id = member_id })
+
+    if photo then
+        -- 照片只能使用自己上传的图片
+        local p = _json_decode(photo)
+        local ids = {}
+        for _, v in ipairs(p) do
+            ids[1 + #ids] = v.id
+        end
+        local use_photos = __model.photo:findByIds(ids)
+
+        if use_photos and #use_photos > 0 then
+            for _, v in ipairs(use_photos) do
+                if v.member_id == member_id then
+                    --can_use_photo_ids = can_use_photo_ids .. v.id .. ',' -- 最后一个逗号,不能去掉，用作搜索使用
+                    v.talk_id = talk.id
+                    v.type = 1 --1表示话题上传
+                    v:update()
+                end
+            end
+        end
+    end
+
+    if list_tag then
+        local tag_json = _json_decode(list_tag)
+        for _, v in ipairs(tag_json) do
+            __model.tag_map_talk:add({ tag_id = v.id, talk_id = talk.id, member_id = member_id })
+        end
+    end
+
+    return self:renderJSON('', 'ok')
+
+end
+
+-- 标签搜索页面
+function cls_talk:tag_search()
+    local val = _http_params('val')
+    if not val or #val < 2 then
+        return
+    end
+    local tags = __model.tag:findP({ conditions = 'title like :title:', bind = { title = val .. '%' } }, 1)
+
+    local tag_list = {}
+    for i, v in ipairs(tags.entry) do
+        tag_list[#tag_list + 1] = v:toJson()
+    end
+
+    return self:renderJSON(tag_list)
+
+end
+
+-- 交流发帖页面渲染
+function cls_talk:edit()
+    local id = _http_params('id')
+    local talk = {}
+
+    self:view('talk', talk):render('index.talk.edit')
+end
+
+-- 感谢/点赞评论
+-- todo 需要加上点赞次数限制，防止被抓包提交错误数据
+function cls_talk:thank_comment()
+    local talk_id = _http_params('talk_id')
+    local comment_talk_id = _http_params('comment_talk_id')
+
+    local member_id = self:currentMemberId()
+
+    if not talk_id or not comment_talk_id then
+        return
+    end
+
+    local comment_talk = __model.comment_talk:findFirstBy('id', comment_talk_id)
+
+    local old = __model.comment_talk_like:findFirst({ conditions = 'comment_talk_id =:comment_talk_id: and member_id =:member_id:',
+                                                      bind = { comment_talk_id = comment_talk_id, member_id = member_id } })
+    if old then
+        old:delete()
+        comment_talk.thank_num = comment_talk.thank_num - 1
+        if comment_talk.thank_num < 0 then
+            comment_talk.thank_num = 0
+        end
+        comment_talk:update() -- 更新评论被点赞次数+1， todo 是否需要使用异步，不然会有问题
+        return self:renderJSON(nil, '')
+    else
+        comment_talk.thank_num = comment_talk.thank_num + 1
+        comment_talk:update() -- 更新评论被点赞次数-1
+    end
+
+    local tcl = __model.comment_talk_like:add({ comment_talk_id = comment_talk_id, member_id = member_id })
+
+    return self:renderJSON(tcl:toJson())
+end
+
+-- 文章帖子添加评论，评论需要使用过滤系统过滤违法词
+function cls_talk:add_comment()
+    local content = _http_params('content')
+    local talk_id = _http_params('talk_id')
+    local pid = _http_params('pid')
+    local reply_member_id = _http_params('reply_member_id')
+
+    if not _is_valid(content) or not talk_id then
+        return
+    end
+
+    local tc = __model.comment_talk:add({ parent_id = pid, content = content, talk_id = talk_id,
+                                          member_id = self:currentMemberId(), reply_member_id = reply_member_id })
+
+    return self:renderJSON(tc:toJson())
+
+end
+
+-- 添加关注者
+function cls_talk:add_follower()
+
+end
+
+-- 话题详情页面
+function cls_talk:comment_list()
+    local talk_id = _http_params('id')   -- 当前talk_id
+    local comment_parent_id = _http_params('pid') -- 评论父id,默认为0
+    local page = _http_params('page') -- 评论父id,默认为0
+
+    -- 查找status为1 的 评论列表
+    local comments = __model.comment_talk:findP({ conditions = 'talk_id=:talk_id: and parent_id=:parent_id: and status=1',
+                                                  bind = { talk_id = talk_id, parent_id = comment_parent_id },
+        -- order = 'created_at desc'
+    }, page)
+
+    local res = {}
+    local member_id = self:currentMemberId()
+    print('member_id:===', member_id)
+    comments.each(function(_, comment)
+        res[1 + #res] = comment:withJsonIsThank(member_id):withJsonMember():toJson()
+    end)
+
+    return self:renderJSON(res)
+end
+
+-- 话题详情页面
+function cls_talk:detail()
+    local id = _http_params('id')
+    if not id then
+        return
+    end
+
+    local talk = __model.talk:findFirstBy('id', id)
+    if talk then
+        local title = _str_sub(talk.content, 50)
+        talk.is_fav = false -- 是否收藏
+        talk.is_thank = false -- 是否感谢
+        talk:getPhoto()
+
+        --talk.member_name =
+
+        --talk.tags = __model.tag:find({ conditions = '' })
+
+        --local talk = { title = '公司名称变更，同时小程序也要改名，要怎么操作？', content = talk.content, created_at_text = '2021-3-8', is_fav = false,
+        --               member_name = 'KITTY MINI', view_num = 38,
+        --}
+
+        -- 评论异步请求
+
+        self:view('descr', title):view('talk', talk):render('index.talk.detail')
+    end
+end
+
+cls_talk = _extend(cls_talk, "controller/_base")
+
+return cls_talk.super[2](cls_talk)

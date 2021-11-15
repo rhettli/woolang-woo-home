@@ -1,0 +1,271 @@
+local _M = {}
+
+function _M:new()
+    require('conf/admin')
+
+    local uri = _http_request('path')
+    print('uri:===', uri)
+
+    -- 登录和登录提交接口不需要鉴权
+    if not _in_array(uri, { '/admin/operator/', '/admin/operator/login' }) then
+        print('base new...=====', id, md5)
+        local id = _http_cookie('i');
+        local md5 = _http_cookie('m');
+
+        if not _is_valid(id) or not _is_valid(md5) then
+            _http_redirect('/admin/operator/?admin_psw=' .. (__admin_psw or ''), 302)
+            assert(false, 'login again')
+        else
+            print('op:=======', __admin_psw, uri)
+            if __admin_psw and uri == '/admin/operator/' and _http_params('admin_psw') ~= __admin_psw then
+                assert(false, 'admin_psw error')
+            end
+
+            local op = __model.operator:findById(id)
+            print('op find done:=======', id)
+            if not op or _md5(op.password .. ' .;:,') ~= md5 then
+                --_http_redirect('/admin/operator/?admin_psw=' .. (__admin_psw or ''), 302)
+                _out('login again')
+                assert(false, 'login again')
+            end
+            --- 当前操作对象
+            self._currentOperator = op
+        end
+    end
+
+    --if o then
+    --    _merge_left(self, o:new())
+    --end
+
+    --_out(self._currentOperator)
+
+    local l = self.super[1](self)
+
+    --print('L++++++++=========', _json_encode(l))
+
+    return l
+end
+
+function _M:getConditions(value_name)
+    local tb = { conditions = '' }
+    local params = _http_params(value_name .. '[]')
+    local bind = {}
+    local filter = { eq = '=', gte = '>=', gt = '>', lt = '<', lte = '<=', neq = '!=', like = 'like' }
+    if 'table' == type(params) then
+        for i, v in pairs(params) do
+            if _is_valid(v) then
+
+                local prefix = _sub_ex('r', i, '_')
+                i = _sub_ex('ne', i, '_')
+
+                if filter[prefix] then
+                    tb.conditions = tb.conditions .. ' ' .. i .. filter[prefix] .. ':' .. i .. ': and'
+                    bind[i] = v
+                else
+                    print('conditions rule not match:', i, v)
+                end
+            end
+        end
+    end
+
+    tb.conditions = _rtrim(tb.conditions, 'and')
+    tb.bind = bind
+    return tb
+end
+
+function _M:currentOperator()
+    return self._currentOperator
+end
+
+function _M:assign(object, value_name)
+    local params = _http_params(value_name .. '[]')
+
+    --print('assign:===', _json_encode(params))
+
+    assert(type(object) == 'table', 'params must model table')
+
+    for i, v in pairs(params) do
+        object[i] = v
+    end
+end
+
+--- delete a model object
+function _M:delete()
+    local id = _http_params('id')
+    if not id then
+        return 'err1'
+    end
+    local model = __model[self.model_name]:findFirstById(id)
+    if not model then
+        return 'err2'
+    end
+    if self:_beforeDelete(model) == true then
+        return
+    end
+    model:delete()
+    return self:renderJSON(nil, 'ok')
+end
+
+---render a volt file
+function _M:render(tpl)
+    if not self._view then
+        self._view = require('oshine/woo_tpl@1.?:view'):new()
+    end
+
+    local ajax = _http_header('x-requested-with') == 'XMLHttpRequest' and 'ajax' or ''
+
+    -- ========= render start ===========
+    local tpl_dir = _DIR .. '/view/'
+
+    _http_header('Content-Type', 'text/html;charset=utf-8')
+
+    local f
+
+    local store_key = tpl
+
+    tpl = _str_replace(tpl, ".", "/") .. '.volt'
+
+    store_key = ajax .. store_key
+    f = _data_get(store_key)
+    if not f then
+
+        local view_file = tpl_dir .. tpl;
+        print('vf:===', view_file)
+        f = _cat(view_file, true)
+        if not f then
+            assert(false, 'view not exist:' .. view_file)
+        end
+
+        if '' == ajax and self.show_list ~= false then
+
+            local parent_tpl = tpl_dir .. '/layouts/' .. _sub_ex('n', tpl, '/') .. '.volt';
+            local admin_content = _cat(parent_tpl, true)
+            --admin_content = _str_split(admin_content, '{{#content#}}')
+            f = _str_replace(admin_content, "{{#content#}}", f, 1) -- admin_content[1] .. f .. admin_content[2]
+
+            -- store to cache
+
+        end
+
+        _data_put(store_key, f)
+    end
+
+    self._view:render(f)
+end
+
+---修改数据时调用到接口
+function _M:update()
+    local id = _http_params('id')
+    assert(_is_valid(id), 'no id')
+
+    local model = __model[self.model_name]:findFirstById(id)
+    if _is_valid(model) then
+        --print('update valid ok:===', model.nickname)
+        self:assign(model, self.model_name)
+
+        print('status:===', model.status)
+
+        self:_beforeUpdate(model)
+
+        model:save()
+    end
+
+    return self:renderJSON()
+end
+
+--function _M:create()
+--    local model = _new_model(self.model_name)
+--
+--    --local model = new_model:findFirstById(_http_params('id'))
+--
+--    if _is_valid(model) then
+--        self:assign(model, self.model_name)
+--
+--        self:_beforeCreate(model)
+--
+--        model:save()
+--    end
+--    return self:renderJSON()
+--end
+
+--- 获取编辑页面
+function _M:edit()
+    local model
+    local id = _http_params('id')
+    if id then
+        model = __model[self.model_name]:findFirstById(id)
+    else
+        model = _new_model(self.model_name)
+    end
+
+    self:_beforeEdit(model)
+
+    self:view(self.model_name, model):render('admin.' .. self.model_name .. '.edit')
+end
+
+-- 创建表单保存接口，不同于update接口，update是修改数据接口
+function _M:save()
+    local model = _new_model(self.model_name)
+    if _is_valid(model) then
+        self:assign(model, self.model_name)
+
+        self:_beforeCreate(model)
+
+        model:save()
+    end
+    return self:renderJSON()
+end
+
+--- suggest overwrite
+--- @overload
+function _M:_beforeCreate(model)
+end
+--- suggest overwrite
+--- @overload
+function _M:_beforeUpdate(model)
+end
+--- suggest overwrite
+--- @overload
+function _M:_beforeEdit(model)
+end
+--- suggest overwrite
+--- @overload
+function _M:_beforeIndex(models)
+end
+--- suggest overwrite
+--- 被继承的函数，如果返回true表示停止删除
+--- @overload
+function _M:_beforeDelete(model)
+end
+
+function _M:index()
+    print('base index call:====')
+
+    local models = {}
+    if self.model_name and self.show_list ~= false then
+        local cond = self:getConditions(self.model_name)
+
+        local page = _http_params('page')
+        page = page and page or 1
+        models = __model[self.model_name]:findPagination(cond, page * 1, 30)
+
+    end
+    self:_beforeIndex(models)
+    self:view(self.model_name .. 's', models):render("admin." .. self.model_name .. ".index")
+end
+
+function _M:view(name, data)
+    if not self._view then
+        self._view = require('oshine/woo_tpl@1.?:view'):new()
+        self._view.view['admin_name'] = __TITLE
+        if self._currentOperator then
+            self._view.view['operator_username'] = self._currentOperator.username
+        end
+    end
+
+    self._view.view[name] = data
+
+    return self
+end
+
+return _extend(_M, "oshine/woo_mvc@1.?:controller")

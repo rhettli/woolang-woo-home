@@ -1,0 +1,818 @@
+<head1>
+    <link rel="stylesheet" href="/static/css/docDetail.css">
+    <script type="text/javascript" src="/static/photo.js"></script>
+</head1>
+
+
+<div id="body" class="body page_simple page_detail" style="min-height: 927px;">
+    <div class="container_box">
+        <div class="markdown_article_detail hasOtherBox markdown_article_detail_course">
+            <div class="group">
+                <div class="post_detail_main">
+                    <div id="articleApp" class="post_detail mod_default_box">
+                        <div>
+                            <div class="ask_content">
+                                <h2 class="post_content" id="id_content" style="color:#424141">{{data.talk.content}}
+                                </h2>
+                            </div>
+
+                            <div style="display: flex">
+                                {% for k,v in pairs(data.talk.photos) do %}
+                                <img src="{{v.url}}" onclick="showPhotoTalk(this)"
+                                     style="object-fit: cover;width:100px;height:100px;border-radius:.3rem;margin-right: 8px;">
+                                {% end %}
+                            </div>
+
+                            <div style="color:#838383;margin-top: 20px;">
+                                <div>{{data.talk:getTagsJson()}}</div>
+                                <span class="">{{data.talk.created_at_time}}</span>
+                                <span class="">{{data.talk.view_num}} 浏览</span>
+                            </div>
+                        </div>
+                        <div class="post_extra_info detail_footer">
+                            <div id="footer-opr-site"></div>
+                            <div id="blog-footer-opr" class="post_opr_area" style="cursor: pointer;">
+                                <div class="post_opr_area_inner_area">
+                                    <div class="post_opr_area_inner">
+                                        <div class="post_opr post_opr_public post_opr_public_l post_opr_invite_answer">
+                                                <span class="footer-left-btn">
+                                                    <a @click="answerTalk" class="btn btn_primary">回答</a>
+                                                    <a @click="followTalk" class="btn btn_default">关注问题</a></span>
+                                            <a onclick="showInvitePanel()" class="post_opr_meta"><span
+                                                    class="icon_post_opr ic_invite_answer"></span>邀请回答</a></div>
+                                        <div class="post_opr post_opr_public">
+                                            <div class="post_opr_col post_opr_col_left">
+                                                <a data-component-identifier="qa-content-comment"
+                                                   class="post_opr_meta post_opr_meta_btn post_opr_meta_reward for_pc selected"
+                                                   style="cursor: pointer; background-color: white;">
+                                                    <div class="post_opr_meta_btn_inner">
+                                                        <img src="/static/svg/heart_.svg" alt="感谢"
+                                                             style="width: 22px;"/>1.5k
+                                                    </div>
+                                                </a></div>
+                                            <div class="post_opr_col post_opr_col_left">
+                                                <a data-component-identifier="qa-content-comment"
+                                                   class="post_opr_meta post_opr_meta_btn post_opr_meta_reward for_pc selected"
+                                                   style="cursor: pointer; background-color: white;">
+                                                    <div class="post_opr_meta_btn_inner">
+                                                        <img src="/static/svg/fav_.svg" alt="收藏" style="width: 22px;"/>212k
+                                                    </div>
+                                                </a></div>
+                                            <div class="post_opr_col post_opr_col_right">
+                                                <div class="mode__share post_opr_meta">
+                                                    <div href="javascript:;"
+                                                         class="js_share_target share_footer_target_parent"><span
+                                                            class="icon_post_opr ic_share share_footer_target share_footer_target_icon js_share_target"></span>分享
+                                                        <div class="shareImg js_share_target"
+                                                             style="display: none;"><span
+                                                                class="shareImg__load share_footer_target"></span>
+                                                            <div title="小程序码"
+                                                                 class="sharjs_share_target_target share_footer_target"
+                                                                 style="background-image: url('http://mmbiz.qpic.cn/mmbiz_jpg/F2HXib8Pibmshmibpqiappjia7nicpxSfkHeZysqNttibC9286Jbia6FvgjaiagkE3NM4xjmoDExDJ4eXoSoBHWrrDicNlfQ/0');"></div>
+                                                            <p class="share_img_desc js_share_target share_footer_target">
+                                                                扫描小程序码分享</p><a href="javascript:;"
+                                                                               class="share_footer_target js_share_target">复制链接</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                        class="popover__box post_opr_meta post_opr_meta_more_operation for_pc popover__box_hide popover__box__use__target-position"><span
+                                                        class="popover_target"><div
+                                                        class="post_opr_meta icon_operation_more"></div></span></span>
+                                                <div class="post_opr_meta icon_operation_more for_mobile"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="anwser__area">
+                        <div id='id_answer_area' class="answer_container">
+
+                            <!--                            投诉-->
+                            <div class="dialog_wrapper page_mode_dialog_complain dialog_with_head"
+                                 style="display:none;">
+                                <div class="dialog_wrp_new dialog_component">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+                                        <div class="dialog_hd"><h3>请选择投诉理由</h3></div>
+                                        <div class="dialog_bd">
+                                            <div class="dialog_complain_list">
+                                                <div class="mod_access">
+                                                    <ul class="access_list">
+                                                        <li class="access_list_item access_list_item_hasMore">
+                                                            <div class="access_list_item_head">广告内容</div>
+                                                        </li>
+                                                        <li class="access_list_item access_list_item_hasMore">
+                                                            <div class="access_list_item_head">违法违规</div>
+                                                        </li>
+                                                        <li class="access_list_item access_list_item_hasMore">
+                                                            <div class="access_list_item_head">恶意灌水内容</div>
+                                                        </li>
+                                                        <li class="access_list_item access_list_item_hasMore">
+                                                            <div class="access_list_item_head">其他</div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--                            删除此话题-->
+                            <div class="dialog_wrapper dialog_with_head" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:600px;">
+                                    <div class="dialog">
+                                        <div class="dialog_hd"><h3>删除当前帖子</h3></div>
+                                        <div class="dialog_bd">
+                                            <div class="page_msg large simple default single_line">
+                                                <div class="inner group"><span class="msg_icon_wrapper"><i
+                                                        class="icon_msg info "></i></span>
+                                                    <div class="msg_content "><h4>删除后帖子内容及评论将一并被删除，且不可恢复。</h4></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="dialog_ft"><a href="javascript:;"
+                                                                  class="btn js_btn btn_warn">删除</a><a
+                                                href="javascript:;" class="btn btn_default js_btn">取消</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dialog_wrapper" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:496px;">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+
+                                        <div class="dialog_bd">
+                                            <div class="level7_delete_dialog"><img
+                                                    src="https://res.wx.qq.com/community/dist/community/images/icons_outlined_error_0d380d.svg"
+                                                    class="level7_delete_dialog_icon">
+                                                <div class="level7_delete_dialog_msg"><p
+                                                        class="level7_delete_dialog_msg_title">确定删除？</p>
+                                                    <p class="level7_delete_dialog_msg_tip">删除后不可恢复</p></div>
+                                            </div>
+                                            <input placeholder="请输入删除理由" value=""
+                                                   class="level7_delete_dialog_reason"></div>
+                                        <div class="dialog_ft"><a href="javascript:;" class="btn btn_default"
+                                                                  style="color:#07C160;">取消</a><a
+                                                href="javascript:;" class="btn btn_primary">确定</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dialog_wrapper dialog_notice dialog_with_head" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:514px;">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+                                        <div class="dialog_hd"><h3>关注“微信开放社区”公众号</h3></div>
+                                        <div class="dialog_bd"><p class="dialog_notice_info">
+                                            关注后，可在微信内接收相应的重要提醒。</p>
+                                            <div class="js_qr_img qrcheck_img_area"><img
+                                                    src="https://res.wx.qq.com/community/dist/community/images/community_qrcode_c0a4a0.jpg"
+                                                    alt="" class="qrcheck_img" style="margin:0 auto;"></div>
+                                            <p class="dialog_notice_indicate">请使用微信扫描二维码关注 “微信开放社区” 公众号</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mod_dialog_invite_answer">
+                                <!--                                邀请用户来评论面板-->
+                                <div class="dialog_wrapper dialog_invite_answer dialog_with_head" style="display: none"
+                                     v-show="is_invite_panel_show" id="id_invite_panel">
+                                    <div class="dialog_wrp_new dialog_component" style="width: 600px;">
+                                        <div class="dialog"><a class="icon16_opr closed pop_closed"
+                                                               @click="closeInvitePanel">关闭</a>
+                                            <div class="dialog_hd"><h3>选择要邀请回答的用户</h3></div>
+                                            <div class="dialog_bd">
+                                                <div class="dialog_invite_answer_box">
+                                                    <div class="dialog_invite_answer_box_head"><p
+                                                            class="dialog_invite_answer_box_head_desc">今天还可邀请 2
+                                                        次</p></div>
+                                                    <div class="dialog_invite_answer_box_body">
+                                                        <ul class="invite_answer_list">
+                                                            <li class="invite_answer_list_item">
+                                                                <div class="invite_answer_list_item_head"><span
+                                                                        class="invite_answer_list_item_head_avatar"><a
+                                                                        href="/community/personal/oCJUsw6VrwozN2XbQtVv8atiGduo"
+                                                                        class="" target="_blank"><img
+                                                                        src="http://mmbiz.qpic.cn/mmbiz_png/cgFqicOiaObs7UUja97VQfKKLoI2aFpTDMFVsibTO7HvtsV1wJk8qOtFOI3wo3fSia4RH5icWwp0tPssCZdic2vujA8Q/0?wx_fmt=png"
+                                                                        class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                                    <div class="invite_answer_list_item_head_content">
+                                                                        <p class="invite_answer_list_item_head_content_title">
+                                                                            社区技术运营专员-许涛
+                                                                            <span title="微信官方用户"
+                                                                                  class="official_new"></span></p>
+                                                                        <p class="invite_answer_list_item_head_content_desc">
+                                                                            <span class="invite_answer_list_item_head_content_desc_item">17435 回答</span>
+                                                                        </p></div>
+                                                                </div>
+                                                                <div class="invite_answer_list_item_foot">
+                                                                    <div class="invite__foot__below__level">
+                                                                        <div title="成长等级：4"
+                                                                             class="mode__grow-up-tag mode__grow-up-tag__small">
+                                                                            <span class="grow__up__tag__icon grow__up__tag__growup1__icon grow__up__tag__growup4__icon"></span>
+                                                                        </div>
+                                                                        <span class="invite__foot__below__level__desc">以上可以邀请</span>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                            <li class="invite_answer_list_item">
+                                                                <div class="invite_answer_list_item_head"><span
+                                                                        class="invite_answer_list_item_head_avatar"><a
+                                                                        href="/community/personal/oCJUsw7tth00kKsx61zvx33RW384"
+                                                                        class="" target="_blank"><img
+                                                                        src="https://wx.qlogo.cn/mmhead/21TWCUdPoEBvEBnm1rQrK8IqHWUqTaZvPgulr3GoZrE/0"
+                                                                        class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                                    <div class="invite_answer_list_item_head_content">
+                                                                        <p class="invite_answer_list_item_head_content_title">
+                                                                            Tiench
+                                                                        </p>
+                                                                        <p class="invite_answer_list_item_head_content_desc">
+                                                                            <span class="invite_answer_list_item_head_content_desc_item">0 回答</span>
+                                                                        </p></div>
+                                                                </div>
+                                                                <div class="invite_answer_list_item_foot"><a
+                                                                        href="javascript:;"
+                                                                        class="btn btn_main green_btn_invite">邀请</a>
+                                                                </div>
+                                                            </li>
+                                                            <li class="invite_answer_list_item">
+                                                                <div class="invite_answer_list_item_head"><span
+                                                                        class="invite_answer_list_item_head_avatar"><a
+                                                                        href="/community/personal/oCJUsw-OIi4ogB8fJqhjEvSqOSz0"
+                                                                        class="" target="_blank"><img
+                                                                        src="https://wx.qlogo.cn/mmhead/Q3auHgzwzM7VMyf9I763lEKwia6icfKfUZxgZPjaRSZhjVZVu2lfFnmg/0"
+                                                                        class="invite_answer_list_item_head_avatar_img"></a></span>
+                                                                    <div class="invite_answer_list_item_head_content">
+                                                                        <p class="invite_answer_list_item_head_content_title">
+                                                                            利川特产
+                                                                        </p>
+                                                                        <p class="invite_answer_list_item_head_content_desc">
+                                                                            <span class="invite_answer_list_item_head_content_desc_item">0 回答</span>
+                                                                        </p></div>
+                                                                </div>
+                                                                <div class="invite_answer_list_item_foot"><a
+                                                                        href="javascript:;"
+                                                                        class="btn btn_main green_btn_invite">邀请</a>
+                                                                </div>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dialog_wrapper dialog_with_head" style="display:none;">
+                                <div class="dialog_wrp_new dialog_component" style="width:600px;">
+                                    <div class="dialog"><a href="javascript:;"
+                                                           class="icon16_opr closed pop_closed">关闭</a>
+                                        <div class="dialog_hd"><h3>反馈</h3></div>
+                                        <div class="dialog_bd">
+                                            <div><textarea type="text" placeholder="请填写反馈内容" rows="5"
+                                                           class="review_dialog_textarea"></textarea>
+                                                <div style="text-align:center;margin-top:20px;">
+                                                    <button class="btn btn-primary">确定</button>
+                                                    <button class="btn btn-default" style="margin-left:20px;">取消
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="anwser__hd"><p class="anwser__title">{{data.talk.comment_num}} 个回答</p></div>
+                            <div id="comment-list" class=" anwsers__list">
+                                <div class="answer_container">
+                                    <div class="post_comment_area">
+                                        <ul class="post_comment_list">
+                                            <li v-for="item in comment_list"
+                                                class="widget_comment js_post_comment_item post_comment_item ">
+                                                <a href="/community/personal/sq_oshG-4k5TFzwhqlLoyejC6RNCw9k"
+                                                   target="_blank" class="post_comment_owner"><span
+                                                        class="popover__box popover_appreciate popover__box_hide">
+                                                    <span class="popover_target"><div
+                                                            class="post_comment_owner_avatar">
+                                                        <img :src="item.member.avatar"
+                                                             alt="菜虫网络"
+                                                             class="post_comment_owner_avatar_image"></div>
+                                                        <strong class="post_comment_owner_nickname"
+                                                                v-html="item.member.nickname"></strong>
+                                                    <div class="checking_state_new"><span title="楼主"
+                                                                                          class="lz_new"></span>
+                                                        <!----><!----><!----><!----><!----><!----></div>
+                                                    </span></span>
+                                                </a>
+                                                <!--                                                <div class="checking_state_new">-->
+                                                <!--                                                    <span title="企业用户" class="cy_new"></span>-->
+                                                <!--                                                </div>-->
+
+                                                <span class="post_comment_pos">
+                                                    <span class="post_comment_time">24分钟前</span></span>
+                                                <div itemprop="text" class="post_comment_content" style="display:;">
+                                                    <p v-html="item.content"></p></div>
+
+                                                <div class="post_comment_info" style="display:;">
+                                                    <div class="mobile_post_comment_info_hd">
+                                                        <div class="mobile_post_comment_time">24分钟前</div>
+                                                    </div>
+                                                    <div class="post_comment_opr">
+                                                        <div data-component-identifier="comment-like"
+                                                             class="best_comment_agree click hover_click">
+                                                            <div class="comment_topic_agree"
+                                                                 @click="goodClick(item.id)">
+                                                                <i :class="'icon_post_opr hover_click '+ (item.is_thank?'icon_topic_agree':'icon_topic_unagree')"></i>赞
+                                                                <span v-html="item.thank_num"></span></div>
+                                                        </div>
+                                                        <!--                                                        <div class="best_comment_unagree">-->
+                                                        <!--                                                            <div class="comment_topic_agree"><i-->
+                                                        <!--                                                                    class="icon_post_opr icon_topic_unagree"></i>-->
+                                                        <!--                                                            </div>-->
+                                                        <!--                                                        </div>-->
+                                                        <div class="js_comment best_comment_discuss"><i
+                                                                class="icon_post_opr discuss"></i><span
+                                                                class="post_opr_wording">回复
+                                                            </span></div>
+                                                        <span
+                                                                class="popover__box popover_comments_operation_group popover__box_hide"
+                                                        ><span class="popover_target"><div
+                                                                class="post_opr_meta icon_operation_more"></div></span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="post_comment_reply_area part3" v-if="item.reply_switch">
+                                                    <div class="post_comment_area">
+                                                        <ul class="post_comment_list" style="display: none;"></ul>
+                                                        <div class="comment_reply_box"><img
+                                                                src="https://wx.qlogo.cn/mmhead/WPeaxqfXnx5Ye9fiaJyYicVlRbjhFHMbPmHuImILl67N4/64"
+                                                                class="comment_reply_avatar">
+                                                            <div class="comment_reply_body">
+                                                                <div class="comment_reply_input_box comment_reply_input_box_active">
+                                                                    <div class="frm_control_group frm_control_group_textarea">
+                                                                        <label for="form-item-"
+                                                                               class="frm_label"></label>
+                                                                        <div class="frm_controls"><span
+                                                                                class="frm_textarea_box with_counter counter_in append count"
+                                                                                style="width: auto;"><div
+                                                                                class="frm_textarea frm_textarea_contenteditable"><div
+                                                                                contenteditable="true"
+                                                                                class="frm_textarea_contenteditable_inner needsclick">你好</div>
+                                                                            </div></span>
+                                                                            <p class="frm_msg fail"
+                                                                               style="display: none;"></p>
+                                                                            <p class="frm_msg fail"
+                                                                               style="display: none;">
+                                                                                超过了100个文字，请尽量缩短</p></div>
+                                                                    </div>
+                                                                    <div class="comment_reply_input_box__extend">
+                                                                        <a href="javascript:;" title="添加图片文件"
+                                                                           class="comment_reply_input_box__extend__item ic icon_image_editor active"></a>
+                                                                    </div>
+                                                                    <button class="btn btn_primary">回复</button>
+                                                                </div>
+                                                                <div v-if="item.reply_switch_add_photo"
+                                                                     class="comment_reply_input_box__extend__editor__area">
+                                                                    <div class="comment_reply_input_box__extend__editor__item comment_reply_input_box__extend__editor__area__image">
+                                                                        <div class="comment_reply_input_box__extend__editor__item__head">
+                                                                            添加图片
+                                                                        </div>
+                                                                        <div class="comment_reply_input_box__extend__editor__item__body">
+                                                                            <div class="frm_control_group frm_control_group_upload_images">
+
+                                                                                <div class="frm_controls frm_vertical_pt">
+                                                                                    <div class="weui-desktop-upload">
+
+                                                                                        <div class="weui-desktop-upload__imgs__wrp">
+                                                                                            <ul class="weui-desktop-upload__imgs">
+                                                                                                <li class="weui-desktop-upload__file weui-desktop-upload__file_image-holder">
+                                                                                                    <div class="weui-desktop-image-holder__wrp">
+                                                                                                        <i class="weui-desktop-image-holder__preview"
+                                                                                                           style="background-image: url(&quot;http://mmbiz.qpic.cn/mmbiz_png/F2HXib8Pibmshmibpqiappjia7nicpxSfkHeZynT2dr4P6RrwsplibxQljslUJicYpxlKiangAd4CVvSbiaaTdic2ZKpd1QiaQ/0?wx_fmt=png&quot;);"></i><span
+                                                                                                            class="weui-desktop-image-holder__mask"><a
+                                                                                                            href="javascript:;"
+                                                                                                            class="weui-desktop-icon__delete">删</a>
+                                                                                                        </span>
+                                                                                                    </div>
+                                                                                                </li>
+                                                                                            </ul>
+                                                                                            <a href="javascript:;"
+                                                                                               class="weui-desktop-upload__img__btn uploader_btn_outer webuploader-container">
+                                                                                                <div class="uploader_btn_inner webuploader-pick">
+                                                                                                    <i class="weui-desktop-icon__add"></i>
+                                                                                                    <div class="weui-desktop-upload__img__btn__title">
+                                                                                                        上传图片
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div id="rt_rt_1fj2fibgrao31bm51iijmia12sua"
+                                                                                                     style="position: absolute; inset: 0px auto auto 0px; width: 64px; height: 64px; overflow: hidden;">
+                                                                                                    <input type="file"
+                                                                                                           multiple="multiple"
+                                                                                                           accept=".bmp,.png,.jpeg,.jpg"
+                                                                                                           style="display: none;"><label
+                                                                                                        style="opacity: 0; width: 100%; height: 100%; display: block; cursor: pointer; background: rgb(255, 255, 255);"></label>
+                                                                                                </div>
+                                                                                            </a></div>
+                                                                                        <p class="frm_msg fail"
+                                                                                           style="display: none;"></p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div v-show="item.report"
+                                                     class="dialog_wrapper page_mode_dialog_complain dialog_with_head"
+                                                     style="display:none;">
+                                                    <div class="dialog_wrp_new dialog_component">
+                                                        <div class="dialog"><a href="javascript:;"
+                                                                               class="icon16_opr closed pop_closed">关闭</a>
+                                                            <div class="dialog_hd"><h3>请选择投诉理由</h3></div>
+                                                            <div class="dialog_bd">
+                                                                <div class="dialog_complain_list">
+                                                                    <div class="mod_access">
+                                                                        <ul class="access_list">
+                                                                            <li class="access_list_item access_list_item_hasMore">
+                                                                                <div class="access_list_item_head">
+                                                                                    广告内容
+                                                                                </div>
+                                                                            </li>
+                                                                            <li class="access_list_item access_list_item_hasMore">
+                                                                                <div class="access_list_item_head">
+                                                                                    违法违规
+                                                                                </div>
+                                                                            </li>
+                                                                            <li class="access_list_item access_list_item_hasMore">
+                                                                                <div class="access_list_item_head">
+                                                                                    恶意灌水内容
+                                                                                </div>
+                                                                            </li>
+                                                                            <li class="access_list_item access_list_item_hasMore">
+                                                                                <div class="access_list_item_head">
+                                                                                    其他
+                                                                                </div>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div></div>
+                                                <div></div>
+                                            </li>
+
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--回复楼主-->
+                            <div class="part3" v-if="is_show_main_reply_panel">
+                                <div class="post_comment_area">
+                                    <ul class="post_comment_list" style=""></ul>
+                                    <div class="comment_reply_box"><img
+                                            :src="current_member.avatar"
+                                            class="comment_reply_avatar">
+                                        <div class="comment_reply_body">
+                                            <div class="comment_reply_input_box comment_reply_input_box_active">
+                                                <div class="frm_control_group frm_control_group_textarea">
+                                                    <label for="form-item-"
+                                                           class="frm_label"></label>
+                                                    <div class="frm_controls"><span
+                                                            class="frm_textarea_box with_counter counter_in append count"
+                                                            style="width: 100%;position: relative"><div
+                                                            class="frm_textarea frm_textarea_contenteditable">
+                                                        <div style="position: absolute;color: #9a9a9a;"
+                                                             v-if="isMainMentionShow"
+                                                             @click="hideMentionClick">@ssni-991</div>
+                                                        <div id="id_main_reply" contenteditable="true"
+                                                             class="frm_textarea_contenteditable_inner needsclick"> </div>
+                                                                            </div></span>
+                                                        <p class="frm_msg fail" style="display: none;"></p>
+                                                        <p class="frm_msg fail" style="display: none;">
+                                                            超过了100个文字，请尽量缩短</p></div>
+                                                </div>
+                                                <div class="comment_reply_input_box__extend">
+                                                    <a @click="mainAddPhotoClick" title="添加图片文件"
+                                                       class="comment_reply_input_box__extend__item ic icon_image_editor active"></a>
+                                                </div>
+                                                <button class="btn btn_primary" @click="mainReplyClick">回复</button>
+                                            </div>
+                                            <div v-if="is_show_main_reply_panel_photo"
+                                                 class="comment_reply_input_box__extend__editor__area">
+                                                <div class="comment_reply_input_box__extend__editor__item comment_reply_input_box__extend__editor__area__image">
+                                                    <div class="comment_reply_input_box__extend__editor__item__head">
+                                                        添加图片(1/9)
+                                                    </div>
+                                                    <div class="comment_reply_input_box__extend__editor__item__body">
+                                                        <div class="frm_control_group frm_control_group_upload_images">
+
+                                                            <div class="frm_controls frm_vertical_pt">
+                                                                <div class="weui-desktop-upload">
+
+                                                                    <div class="weui-desktop-upload__imgs__wrp">
+                                                                        <ul class="weui-desktop-upload__imgs">
+                                                                            <li class="weui-desktop-upload__file weui-desktop-upload__file_image-holder">
+                                                                                <div class="weui-desktop-image-holder__wrp">
+                                                                                    <i class="weui-desktop-image-holder__preview"
+                                                                                       style="background-image: url(&quot;http://mmbiz.qpic.cn/mmbiz_png/F2HXib8Pibmshmibpqiappjia7nicpxSfkHeZynT2dr4P6RrwsplibxQljslUJicYpxlKiangAd4CVvSbiaaTdic2ZKpd1QiaQ/0?wx_fmt=png&quot;);"></i><span
+                                                                                        class="weui-desktop-image-holder__mask"><a
+                                                                                        href="javascript:;"
+                                                                                        class="weui-desktop-icon__delete">删</a>
+                                                                                                        </span>
+                                                                                </div>
+                                                                            </li>
+                                                                        </ul>
+                                                                        <a href="javascript:;"
+                                                                           class="weui-desktop-upload__img__btn uploader_btn_outer webuploader-container">
+                                                                            <div class="uploader_btn_inner webuploader-pick">
+                                                                                <i class="weui-desktop-icon__add"></i>
+                                                                                <div class="weui-desktop-upload__img__btn__title">
+                                                                                    上传图片
+                                                                                </div>
+                                                                            </div>
+                                                                            <div id="rt_rt_1fj2fibgrao31bm51iijmia12sua"
+                                                                                 style="position: absolute; inset: 0px auto auto 0px; width: 64px; height: 64px; overflow: hidden;">
+                                                                                <input type="file"
+                                                                                       multiple="multiple"
+                                                                                       accept=".bmp,.png,.jpeg,.jpg"
+                                                                                       style="display: none;"><label
+                                                                                    style="opacity: 0; width: 100%; height: 100%; display: block; cursor: pointer; background: rgb(255, 255, 255);"></label>
+                                                                            </div>
+                                                                        </a></div>
+                                                                    <p class="frm_msg fail"
+                                                                       style="display: none;"></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pagination_wrp for_pc pagination_pos_right"></div>
+                        </div>
+
+                        <div id="editor"></div>
+                        <div id="viewer"></div>
+
+                        <div class="dialog_wrapper dialog_notice dialog_with_head" style="display:none;">
+                            <div class="dialog_wrp_new dialog_component" style="width:514px;">
+                                <div class="dialog"><a href="javascript:;"
+                                                       class="icon16_opr closed pop_closed">关闭</a>
+                                    <div class="dialog_hd"><h3>关注“微信开放社区”公众号</h3></div>
+                                    <div class="dialog_bd"><p class="dialog_notice_info">
+                                        关注后，可在微信内接收相应的重要提醒。</p>
+                                        <div class="js_qr_img qrcheck_img_area"><img
+                                                src="https://res.wx.qq.com/community/dist/community/images/community_qrcode_c0a4a0.jpg"
+                                                alt="" class="qrcheck_img" style="margin:0 auto;"></div>
+                                        <p class="dialog_notice_indicate">请使用微信扫描二维码关注 “微信开放社区” 公众号</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="post_box_others">
+                    <div class="block-list public_box page_mod_blog_panel" style="">
+                        <a href="/member/home" target="_blank" class="page_mod_blog_panel_head">
+                            <img src="{{data.talk.member:getAvatar()}}" alt="用户头像" width="50px" height="50px"
+                                 class="page_mod_blog_panel_head_avatar">
+                            <div class="page_mod_blog_panel_head_bd">
+                                <div class="page_mod_blog__nickname">
+                                    <p class="page_mod_blog_panel_head_name">{{data.talk.member.nickname}}</p>
+                                    <div title="成长等级：1" class="mode__grow-up-tag mode__grow-up-tag__small">
+                                        <span class="grow__up__tag__icon grow__up__tag__growup1__icon grow__up__tag__growup1__icon"></span>
+                                    </div>
+                                </div>
+                                <p class="page_mod_blog_panel_head_desc">{{data.talk.member.words}}</p></div>
+                        </a>
+                        <div class="page_mod_blog_panel_body">
+                            <a href="/member/home?t=1"
+                                target="_blank" class="page_mod_blog_panel_body_item"><p
+                                class="page_mod_blog_panel_body_item_title">发布话题</p>
+                            <p class="page_mod_blog_panel_body_item_desc">0</p></a><a
+                                href="/member/home?t=2"
+                                target="_blank" class="page_mod_blog_panel_body_item"><p
+                                class="page_mod_blog_panel_body_item_title">举报收录</p>
+                            <p class="page_mod_blog_panel_body_item_desc">0</p></a><a
+                                href="/member/home?t=3" target="_blank"
+                                class="page_mod_blog_panel_body_item"><p class="page_mod_blog_panel_body_item_title">
+                            关注者</p>
+                            <p class="page_mod_blog_panel_body_item_desc">0</p></a></div>
+                        <div class="page_mod_blog_panel_foot"><a
+                                href="/member/home?t=5"
+                                target="_blank" class="page_mod_blog_panel_foot_item">我关注的问答</a><a
+                                href="/member/home?t=6" target="_blank"
+                                class="page_mod_blog_panel_foot_item">我的收藏</a></div>
+                    </div>
+
+                    <div class="block-list public_box detail_extend">
+                        <div class="block-list__title detail_extend_hd">相关问题</div>
+                        <div class="detail_extend_bd">
+                            <ul class="detail_extend_list">
+                                <li class="detail_extend_list_item"><a
+                                        href="/community/develop/doc/00004a19c80090eda75beea6e50800?_at=1635392164821"
+                                        target="_blank" class="">公司名称变更？</a></li>
+                                <li class="detail_extend_list_item"><a
+                                        href="/community/develop/doc/000042333403a8dd1edae8d315f400?_at=1635392164821"
+                                        target="_blank" class="">公司名称发生变更,小程序去哪里变更呢?</a></li>
+                                <li class="detail_extend_list_item"><a
+                                        href="/community/develop/doc/0006028c34c640bd43191e01a56c09?_at=1635392164821"
+                                        target="_blank" class=""><span title="微信官方用户" class="official_new"></span>注册小程序使用的营业执照公司名称变更了，怎么同步小程序主体？</a>
+                                </li>
+                                <li class="detail_extend_list_item"><a
+                                        href="/community/develop/doc/00020652240370bd3419c7d2856800?_at=1635392164821"
+                                        target="_blank" class="">注册小程序的营业执照公司名称变更了要怎么操作？</a></li>
+                                <li class="detail_extend_list_item"><a
+                                        href="/community/develop/doc/0008088aaec0b8f9ca9b9b98656000?_at=1635392164821"
+                                        target="_blank" class="">公司名称变更了.开发者里的认证资料如何变更?</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="block-list public_box detail_extend">
+                        <div class="block-list__title detail_extend_hd">相关文档</div>
+                        <div class="detail_extend_bd">
+                            <ul class="detail_extend_list">
+                                <li class="detail_extend_list_item"><a target="_blank"
+                                                                       href="https://developers.weixin.qq.com/miniprogram/product/mini-store/pinpai/zhengzhao/shangbiaobiangeng.html"
+                                                                       title="《商标变更证明》: 小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《商标变更证明》"
+                                                                       class="singleline">《商标变更证明》:
+                                    小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《商标变更证明》</a></li>
+                                <li class="detail_extend_list_item"><a target="_blank"
+                                                                       href="https://developers.weixin.qq.com/miniprogram/product/mini-store/pinpai/zhengzhao/qiyebiangeng.html"
+                                                                       title="企业信息变更备案: 小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《企业信息变更备案》"
+                                                                       class="singleline">企业信息变更备案:
+                                    小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《企业信息变更备案》</a></li>
+                                <li class="detail_extend_list_item"><a target="_blank"
+                                                                       href="https://developers.weixin.qq.com/miniprogram/product/mini-store/pinpai/zhengzhao/shangbiaobiangeng.html#规范："
+                                                                       title="规范：: 小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《商标变更证明》"
+                                                                       class="singleline">规范：:
+                                    小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《商标变更证明》</a></li>
+                                <li class="detail_extend_list_item"><a target="_blank"
+                                                                       href="https://developers.weixin.qq.com/miniprogram/product/mini-store/pinpai/zhengzhao/qiyebiangeng.html#规范："
+                                                                       title="规范：: 小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《企业信息变更备案》"
+                                                                       class="singleline">规范：:
+                                    小程序/运营/运营规范/八、小商店特别规范/资质证照示例说明/《企业信息变更备案》</a></li>
+                                <li class="detail_extend_list_item"><a target="_blank"
+                                                                       href="https://developers.weixin.qq.com/miniprogram/dev/wxcloud/reference-sdk-api/database/command/Command.or.html#跨字段的或操作"
+                                                                       title="Command.or:#跨字段的或操作: 小程序/开发/云开发/开发者资源/SDK 文档/数据库/Command/查询·逻辑操作符/or"
+                                                                       class="singleline">Command.or:#跨字段的或操作:
+                                    小程序/开发/云开发/开发者资源/SDK 文档/数据库/Command/查询·逻辑操作符/or</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>-->
+<!--<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>-->
+
+<script>
+    var text = $('#id_content').html();  //"#被骗了 #javascript #你好 Tutorial";
+    var res = text.replace(/(#\S+ )/g, "<a href='/talk/tag?k=$1'>$1</a>");
+    console.log(res)
+    $('#id_content').html(res);
+</script>
+<script>
+
+    // const editor = new toastui.Editor({
+    //     el: document.querySelector('#editor'),
+    //     previewStyle: 'vertical',
+    //     height: '500px',
+    //     initialValue: ''
+    // });
+
+
+    let _vue = new Vue({
+        el: "#id_answer_area",
+        data: {
+            comment_list: [], // comment list from ajax request
+            talk_id: '{{data.talk.id}}',
+            talk_member_id: '{{data.talk.member.id}}',
+            is_follower: false, // 是否为话题关注者
+            is_liker: false, // 是否为喜欢/关注者
+            current_comment_page: 1,
+            is_invite_panel_show: false, // 是否邀请面板可视
+
+            is_show_main_reply_panel: true,
+            is_show_main_reply_panel_photo: true,
+            isMainMentionShow: true, // 是否显示主回复提示
+
+            main_reply_content: '',
+
+            current_member: currentMember(),
+
+        },
+        created: function () {
+            // get page 1 comment list
+
+            let data = {page: this.current_comment_page, pid: 0, id: this.talk_id}
+            let self = this
+            ajax('/talk/comment_list', 'POST', 'json', data, null, function (res) {
+                console.log(res)
+                if (res.code == 0) {
+                    self.comment_list = res.data
+                } else {
+                    showAlertPanel('获取评论列表失败！')
+                }
+            }, function (res) {
+
+            })
+
+        },
+        computed: {},
+        methods: {
+            mainAddPhotoClick() {
+                this.is_show_main_reply_panel_photo = !this.is_show_main_reply_panel_photo
+            },
+            answerTalk() {
+                this.is_show_main_reply_panel = true
+                scrollTo(0, window.screen.height)
+            },
+            thankTalk() { // 就是喜欢 感谢🙏的意思
+                ajax('/talk/add_liker', 'POST', 'json', {talk_id: this.talk_id}, null, function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        showAlertPanel('感谢楼主成功！')
+                        this.is_liker = !this.is_liker
+                    }
+                })
+            },
+            followTalk() {
+                ajax('/talk/add_follower', 'POST', 'json', {talk_id: this.talk_id}, null, function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        showAlertPanel('关注成功！')
+                        this.is_follower = !this.is_follower
+                    }
+                })
+            },
+            getLangDemoList(lang) {
+
+            },
+            closeInvitePanel() {
+                this.is_invite_panel_show = false
+            },
+            hideMentionClick() {
+                this.isMainMentionShow = false
+                $('#id_main_reply').focus();
+            },
+            mainReplyClick() { // 主回复开始
+                let data = {
+                    content: $('#id_main_reply').html(),
+                    talk_id: this.talk_id,
+                    pid: 0,
+                    reply_member_id: this.talk_member_id, //checkLogin(true),
+                }
+                ajax('/talk/add_comment', 'POST', 'json', data, null, function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        showAlertPanel('回复成功！')
+                    }
+                })
+            },
+            goodClick(comment_talk_id) { // thank for comment
+                let data = {
+                    talk_id: this.talk_id,
+                    comment_talk_id: comment_talk_id
+                }
+                let self = this
+                ajax('/talk/thank_comment', 'POST', 'json', data, null, function (res) {
+                    if (res.code == 0) {
+                        for (let i = 0; i < self.comment_list.length; i++) {
+                            if (comment_talk_id == self.comment_list[i].id) {
+                                if (res.data.id) {
+                                    showAlertPanel('点赞成功！')
+                                    self.comment_list[i].is_thank = true
+                                    self.comment_list[i].thank_num++
+                                } else {
+                                    showAlertPanel('取消点赞成功！')
+                                    self.comment_list[i].is_thank = false
+                                    self.comment_list[i].thank_num--
+                                }
+                                break
+                            }
+                        }
+                    } else {
+                        showAlertPanel('未知异常')
+                    }
+                })
+            }
+        }
+    })
+
+    function showInvitePanel() {
+        _vue.$data.is_invite_panel_show = true
+    }
+</script>

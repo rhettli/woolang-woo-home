@@ -1,0 +1,8 @@
+return {
+    _demo = { zh = 'hello world!程序示例', en = 'demo for hello world' },
+
+    _run = { zh = '运行demo', en = 'run this demo' },
+    run = function()
+        print('hello world!')
+    end
+}

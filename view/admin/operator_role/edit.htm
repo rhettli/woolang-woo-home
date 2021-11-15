@@ -1,0 +1,13 @@
+
+
+{% local f=simple_form(operator_role, {login_at_text='登录时间', data='登录地区'}) %}
+
+
+{% f.input('name',{ label='角色名',width='100%' }) %}
+
+
+{% f.select('status',{  label='状态',width='100%' } ) %}
+
+{% f.submit('保存') %}
+
+{% f.render() %}

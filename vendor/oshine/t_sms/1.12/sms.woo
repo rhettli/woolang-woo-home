@@ -1,0 +1,84 @@
+local sms = {
+    _domain = 'sms.tencentcloudapi.com',
+    secKey = nil,
+    secId = nil,
+    SmsSdkAppId = nil,
+    TemplateId = nil,
+    SignName = nil,
+    SessionContext = nil
+}
+
+function sms:new(secId, secKey, SignName, SmsSdkAppId, TemplateId, SessionContext)
+    self.secId = secId
+    self.secKey = secKey
+    self.SmsSdkAppId = SmsSdkAppId
+    self.TemplateId = TemplateId
+    self.SignName = SignName
+    self.SessionContext = SessionContext
+    return self
+end
+
+function sms:send(mobiles, params)
+    local method = 'POST'
+
+    local body = {
+        Action = 'SendSms',
+        Language = 'zh-CN',
+        Nonce = '0577006791947779415',
+        --['PhoneNumberSet.0'] = '+8617157421731',
+        Region = 'ap-guangzhou',
+        RequestClient = 'SDK_GO_1.0.260',
+        SecretId = self.secId,
+        SessionContext = self.SessionContext,
+        SignName = self.SignName,
+        SignatureMethod = 'HmacSHA1',
+        SmsSdkAppId = self.SmsSdkAppId,
+        TemplateId = self.TemplateId,
+        --['TemplateParamSet.0'] = 0421,
+        --['TemplateParamSet.1'] = 0,
+        Timestamp = _time(),
+        Version = '2021-01-11'
+    }
+
+    for i, v in pairs(mobiles) do
+        body['PhoneNumberSet.' .. (i - 1)] = v
+    end
+
+    for i, v in pairs(params) do
+        body['TemplateParamSet.' .. (i - 1)] = v
+    end
+
+    local keys = {}
+    for k, _ in pairs(body) do
+        keys[#keys + 1] = k
+    end
+    table.sort(keys)
+
+    local kv = ''
+    for _, k in pairs(keys) do
+        kv = kv .. ("&%v=%v"):format(k, body[k])
+    end
+
+    kv = _ltrim(kv, '&')
+
+    local source = method .. self._domain .. "/?" .. kv
+
+    local sign = _hmac(self.secKey, source, 128)
+
+    body.Signature = sign
+
+    --local http = woo.http:new()
+    --local r, e = http:body(body):contentForm():post('https://' .. self._domain)
+
+    local res, ok = woo.http:new():contentForm():body(body):post("https://" .. self._domain)
+
+    return res, ok
+
+end
+
+local SignName, SmsSdkAppId, TemplateId, SessionContext = '', '', '', ''
+local res, ok = sms:new('AKIDoTs0sTothEVWGjxvc2B4h4A2dx0nJYWE', 'TgcGfmcCVYFgqkNjodCUVGkxtYx5wWqt', SignName, SmsSdkAppId, TemplateId, SessionContext)
+                   :send({ '+8617157421731' }, { '0126', 2 })
+print(_json_encode(res.body), ok)
+
+return sms

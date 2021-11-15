@@ -1,0 +1,275 @@
+---view模版解析类
+---
+---@author author liyanxi
+---@class view
+local _M = {}
+local _str_replace_re = _str_replace_re
+local _str_replace = _str_replace
+local _str_index = _str_index
+local _str_split = _str_split
+local _str_sub = _str_sub
+local _out = _out
+
+function _M:new(mod)
+
+    self.view = {}
+
+    return self
+end
+
+function _M:findNext(flag, i)
+    for n = i, #self._arr, 1 do
+        local index = _str_index(item, flag)
+        if index >= 0 then
+            return index
+        end
+    end
+end
+
+-- TODO 把多个连续的_out函数拼接到一起提高速度
+--function _M:contact(str, val)
+--    if _end_with(str, ']]);') then
+--        self.flag_end = true -- 记录下结束渲染后必须要有关闭
+--        return str .. '_out([[' .. val;
+--    end
+--
+--    return str .. val;
+--end
+
+-- Todo write tpl to static file
+function _M:render(f)
+
+    self._arr = _str_split(f, "\n")
+
+    local str = ""
+    local if_count = 0
+    local macro_count = ''
+    local macro = {} -- macro defined code list
+    local ignore = false
+    local contact = false
+    local item = ""
+    for _, item1 in pairs(self._arr) do
+        --out(contact, item, item1, "--------------------------")
+        if contact then
+            item = item .. item1
+            contact = false
+        else
+            item = item1
+        end
+
+        repeat
+
+            local left_equal_flag_index = -1
+            local left_express_flag_index = -1
+
+            if item ~= "" and item ~= "\n" and item ~= "\r" then
+                left_equal_flag_index = _str_index(item, '{{')
+                left_express_flag_index = _str_index(item, '{%')
+            else
+                --out('no item:'..item)
+            end
+
+            local left_real_index = 0
+            local right_real_index = 0
+
+            local is_express = false
+
+            if left_equal_flag_index > -1 or left_express_flag_index > -1 then
+                if left_equal_flag_index > left_express_flag_index then
+                    if left_express_flag_index >= 0 then
+                        is_express = true
+                        left_real_index = left_express_flag_index
+                        right_real_index = _str_index(item, '%}', left_real_index)
+                    else
+                        left_real_index = left_equal_flag_index
+
+                        right_real_index = _str_index(item, '}}', left_real_index)
+                    end
+                else
+                    if left_equal_flag_index >= 0 then
+                        left_real_index = left_equal_flag_index
+
+                        right_real_index = _str_index(item, '}}', left_real_index)
+                    else
+                        is_express = true
+                        left_real_index = left_express_flag_index
+                        right_real_index = _str_index(item, '%}', left_real_index + 2)
+                        --out('+++' .. right_real_index .. ':' .. item)
+                    end
+                end
+
+                if right_real_index < 0 then
+                    contact = true
+                    --assert(false, "template format err:" .. item)
+                end
+
+                if contact == false then
+                    -- match {% %}
+                    if is_express then
+                        --out(left_equal_flag_index .. ',' .. left_express_flag_index .. ',' .. left_real_index .. ',' .. right_real_index .. ' ' .. item)
+
+                        local item_seq = _str_sub(item, left_real_index + 2, right_real_index)
+
+                        --if str_index(item_seq, '{%') > -1 then
+                        --    --assert(false, '{% can in {%')
+                        --end
+
+                        local ind_end_if = _str_index(item_seq, " endif")
+                        local ind_if = _str_index(item_seq, "if ")
+                        if ind_end_if >= 0 and ind_if >= 0 and ind_end_if > ind_if then
+                            print(item)
+                            right_real_index = right_real_index - 2
+                            item = _str_replace(item, 'endif', 'end')
+                        elseif ind_end_if >= 0 then
+                            -- end if
+                            if_count = if_count - 1
+                            item = _str_replace(item, 'endif', 'end')
+                            right_real_index = right_real_index - 2
+
+                        elseif ind_if >= 0 then
+                            -- if
+                            if_count = if_count + 1
+                            --out('if ++' .. item .. ':' .. item_seq)
+
+                        elseif _str_index(item_seq, "/macro ") >= 0 then
+                            -- macro
+                            if macro_count == '' then
+                                assert(false, "macro defined err")
+                            end
+                            macro_count = ''
+                            ignore = true
+                        elseif _str_index(item_seq, "macro ") >= 0 then
+                            -- macro
+                            if macro_count ~= '' then
+                                assert(false, "macro defined err")
+                            end
+                            local fm = _re_match(item, 'macro *(.*?)\\((.*?)\\)')
+                            --print('f:=======',_json_encode(f))
+                            macro_count = fm[1][2]
+                            macro[fm[1][2]] = { param = fm[1][3] } --{% macro edit(op) %}
+                            ignore = true
+
+                            --elseif macro_count ~= "" and str_index(item_seq, "endmacro ") < 0 and str_index(item_seq, "macro ") < 0 then
+                            --    assert(false, "can not contain other {% %} flag in macro.")
+                        elseif _str_index(item_seq, "simple_form") >= 0 then
+                            -- form
+                            item = _str_replace_re(item, 'simple_form\\((.*?),', 'simple_form\(data,"${1}",')
+                            right_real_index = 7 + right_real_index
+                        elseif _str_index(item_seq, "simple_table") >= 0 then
+                            -- form
+                            item = _str_replace_re(item, 'simple_table\\((.*?),', 'simple_table\(data,macro,"${1}",')
+                            --out(item)
+                            right_real_index = 13 + right_real_index
+                        end
+
+                        if true == ignore then
+                            ignore = false
+                        else
+                            if left_real_index > 0 then
+                                local r = _str_sub(item, nil, left_real_index)
+                                --out(r)
+                                str = str .. '_out([[' .. r .. ']]);'
+                            end
+
+                            --_out('++++', item, left_real_index + 2,'-', right_real_index)
+                            local r1 = _str_sub(item, left_real_index + 2, right_real_index)
+
+                            str = str .. r1 .. ';'
+                        end
+
+                        -- {% t.submit('保存') %}
+                    else
+                        -- {{ name }}
+                        if macro_count ~= "" then
+                            if macro[macro_count].code == nil then
+                                macro[macro_count].code = '""'
+                            end
+
+                            --{% macro edit(op) %}
+                            --用户Id:{{op.id}}
+                            --用户昵称:{{op.name}}<br/>
+                            --{% endmacro %}
+
+                            if left_real_index > 0 then
+                                local r = _str_sub(item, nil, left_real_index)
+                                --str = str .. 'out([[' .. r .. ']]);'
+                                macro[macro_count].code = macro[macro_count].code .. '..[[' .. r .. ']]'
+                            end
+
+                            local r1 = _str_sub(item, left_real_index + 2, right_real_index)
+                            --str = str .. 'out(' .. r1 .. ');'
+                            macro[macro_count].code = macro[macro_count].code .. '..(' .. r1 .. ' or [[]])'
+
+                        else
+                            if left_real_index > 0 then
+                                local r = _str_sub(item, nil, left_real_index)
+                                str = str .. '_out([[' .. r .. ']]);'
+                            end
+
+                            local r1 = _str_sub(item, left_real_index + 2, right_real_index)
+                            str = str .. '_out(' .. r1 .. ');'
+                        end
+                    end
+
+                    item = _str_sub(item, right_real_index + 2, nil)
+                    --out('===' .. item)
+                end
+
+            else
+                if contact == false then
+                    if item ~= "\r" and item ~= '' and item ~= '\n' then
+                        if macro_count ~= "" then
+                            if macro[macro_count].code == nil then
+                                macro[macro_count].code = '""'
+                            end
+
+                            macro[macro_count].code = macro[macro_count].code .. '..[[' .. item .. '\n]]'
+
+                        else
+                            str = str .. '_out([[' .. item .. '\n]]);'
+                        end
+                    end
+                    item = ""
+                end
+            end
+            str = str .. "\n"
+
+        until item == "" or contact == true
+    end
+    -- if seg march
+    if if_count ~= 0 then
+        assert(false, 'if not match ' .. if_count)
+    end
+
+    local macro_str = _base64_encode(_json_encode(macro))
+
+    str = 'return function (data) local macro=[[' .. macro_str .. ']];local simple_table=_import("oshine/woo_tpl@1?:simple_table");' ..
+            'local simple_form=_import("oshine/woo_tpl@1?:simple_form");' .. str .. ' end'
+
+    --_out(str)
+
+    local r = loadstring(str)
+    if not r then
+        print('volt syntax error.')
+        return
+    end
+
+    --print(_json_encode(r))
+
+    local t1, t2 = pcall(r(), self.view)
+
+    if not t1 then
+        print('view parse err:', t2)
+    end
+
+
+    --_out('<!--', _http_request('path'))
+    --_out(_http_request('host'))
+    --_out('uri:', _http_request('uri'))
+    --_out(_http_params('member[email_eq]'))
+    --_out(_http_params('member'))
+    --_out(_http_params('email_eq'))
+    --collectgarbage()
+end
+
+return _M

@@ -1,0 +1,14 @@
+local _M = {}
+
+-- [P:member|用户成员]
+-- [I:update|更新]
+-- [I:create|创建]
+-- [I:edit|编辑页面]
+-- [I:index|列表页面]
+
+_M.model_name = 'member'
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)
+

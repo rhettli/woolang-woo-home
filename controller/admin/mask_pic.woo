@@ -1,0 +1,64 @@
+local _M = { model_name = 'mask_pic' }
+
+-- 获取印花图片列表时把印花组名称填充下
+function _M:_beforeIndex(models)
+    if not models.entry then
+        return
+    end
+    for _, model in pairs(models.entry) do
+        --print('model:==============',model)
+        if not model.mask_pic_group_id or tonumber(model.mask_pic_group_id) < 1 then
+            model.mask_pic_group_name = '#公海'
+        else
+            model.mask_pic_group_name = model.mask_pic_group.name
+        end
+    end
+end
+
+-- 创建之前给staus设置为1
+function _M:_beforeSave(model)
+    if model.status == nil then
+        model.status = 1
+    end
+end
+
+--- 在更新模型之前，如果有obj新模型上传，那么直接用新模型替换老模型
+function _M:_beforeUpdate(model)
+    print('_beforeUpdate:=============')
+
+    -- 获取上传的文件 印花图片
+    local font_path = _http_params('file:mask_pic[pic]')
+    -- {"name":"eea20934b4f4c3cf36b392cf8ce12d6c_469x468.png","size":39161,"temp":"/var/folders/nq/g2km3wxx3s3b23fbfs746y7r0000gn/T//eea20934b4f4c3cf36b392cf8ce12d6c_469x468.png39161"}
+    if font_path then
+        print(_json_encode(font_path))
+        self:saveFile(model, font_path)
+    end
+
+
+end
+
+--- 把上传等模型保存到/public/static/obj目录下
+function _M:saveFile(model, font_path)
+    print('side_line_path:==', _json_encode(side_line_path))
+
+    local name = model['id'] .. '.' .. _sub_ex('r', font_path.name, '.')
+
+    local dir = _DIR .. '/public/static/pic/'
+
+    if not _file_exist(dir) then
+        local status = _mkdir(dir)
+        print('fonder not exists:create stauts', status)
+    end
+
+    print(dir .. '/' .. name)
+
+    --{"name":"1631610802565.jpg","size":153054,"temp":"/var/folders/nq/g2km3wxx3s3b23fbfs746y7r0000gn/T//1631610802565.jpg153054"}
+
+    _mv(font_path.temp, dir .. name)
+
+    model['path'] = '/' .. name
+end
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

@@ -1,0 +1,38 @@
+-- 以目录模式启动服务时,运行一次，用于配置程序
+
+
+package.path = '@' .. _DIR .. '/vendor/?.woo'
+--pkg.join('@' .. _DIR .. '/vendor/?.woo')
+
+
+print('before run:===', package.path)
+
+local env = require('oshine/woo_env@1.?:env'):new(_DIR .. '/.env')
+
+-- 设置redis
+local addr = env:get('redis_addr')
+local psw = env:get('redis_psw')
+local db = env:get('redis_db')
+
+print('redis:===', { addr = addr, psw = psw, db = db })
+
+require('oshine/woo_mvc@1.?:cache').conf({ addr = addr, psw = psw, db = db }, 'redis')
+
+--设置ssdb
+addr = env:get('ssdb_addr')
+psw = env:get('ssdb_psw')
+db = env:get('ssdb_db')
+
+print('ssdb:===', { addr = addr, psw = psw, db = db })
+
+require('oshine/woo_mvc@1.?:cache').conf({ addr = addr, psw = psw, db = db }, 'ssdb')
+
+--设置mysql数据库链接
+local db_conn = env:get('db_conn')
+local db_adapter = env:get('db_adapter')
+
+print('db_adapter:===', db_adapter)
+
+require('oshine/woo_mvc@1.?:db').conf({ db_conn = db_conn, adapter = db_adapter })
+
+

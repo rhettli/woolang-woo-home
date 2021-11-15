@@ -1,0 +1,75 @@
+--- queue
+
+
+local _M = setmetatable({
+    queue_key = '$_murphy_queue_key_v?',
+    queue_quit = '$_murphy_queue_can_quit?',
+    queue_name = '_queue_name_default' },
+        { __index = function(_, m)
+            return {
+                -- __queue.member.getTotal()
+                setmetatable({}, { __index = function(_, b)
+                    return _M.delay(m, b)
+                end })
+            }
+        end })
+
+
+-- 动作 参数
+function _M.delay(action, method)
+    return function(params)
+        -- 默认default队列中去
+
+        local redis = __REDIS_CACHE0()
+        local j = _json_encode({ action = action, methord = method, params = params })
+
+        redis:exec('lpush', self.queue_name, j)
+        redis:close()
+        return true
+    end
+end
+
+function _M.conf(params)
+
+end
+
+function _M.start(params)
+    require('oshine/woo_mvc@1?:woo_mvc')
+
+    _M.params = params
+
+    local dir = _dir()
+    dir = _sub_ex(woo.SUBEX_NE, dir, '/')
+
+    local workers = params.workers or 6
+
+    _data_put(_M.queue_quit, false) -- set quit false
+
+    _foreach(workers, function()
+        _run(dir .. '/queue_lib' .. '.woo')
+    end)
+
+    local v, ok, quit
+    while true do
+        quit = _data_get(_M.queue_quit)
+        v, ok = _chan_get(true)
+        if ok then
+            if quit then
+                _chan_put(true)
+            else
+                _chan_put(false)
+            end
+        end
+    end
+end
+
+function _M.reload(p)
+    _data_put(_M.queue_quit, false) -- set quit false
+    _M.start(_M.params)
+end
+
+function _M.stop(p)
+    _data_put(_M.queue_quit, false) -- set quit false
+end
+
+return _M

@@ -1,0 +1,80 @@
+local _M = {}
+
+function _M:new(params)
+    if params and params.db_conn then
+        __woo_mvc.db_conn = params
+    else
+        params = __woo_mvc.db_conn
+    end
+
+    self._db = nil
+    self:_connect(params)
+    return self
+end
+
+function _M:_connect(params)
+
+    local c = woo.orm:new()
+    local ok, err = c:open(params.adapter, params.db_conn)
+    --print(ok, err)
+    if ok then
+        --print('mysql ok')
+        self._db = c
+    else
+        --self._db = nil
+        error("connect to database err", err)
+    end
+end
+
+function _M.conf(params)
+    --adapter = 'mysql',
+    --conn = _data_get('sql_conn')
+
+    assert(params.db_conn, 'not support key "sql_conn",use like "root:123@(127.0.0.1:3366)/dbname?charset=utf8&parseTime=True&loc=Local"')
+
+    params.adapter = params.adapter or 'mysql'
+    _data_put('$_woo_mvc_sql', params)
+
+    --print(_json_encode(params), 'get:', _json_encode(_data_get('$_woo_mvc_sql')))
+
+end
+
+-- only exec one times
+function _M:with(fc, close)
+
+    assert(type(fc) == 'function', 'params #1 must function')
+    assert(self._db, 'db connect fail')
+    local e
+    e, self.r = pcall(fc, self._db)
+
+    --assert(e, 'db exec fail' .. (self.r or ''))
+    if close then
+        self._db:close()
+    end
+    return self
+end
+
+function _M:withClose(fc)
+    self:with(fc)
+    self._db:close()
+    return self.r
+end
+
+function _M:query(...)
+    return self._db:query(...)
+end
+
+function _M:exec(...)
+    return self._db:exec(...)
+end
+
+function _M:close()
+    if not self._db then
+        return
+    end
+    local r = self._db:close()
+    self._db = nil
+    return r
+end
+
+return _M

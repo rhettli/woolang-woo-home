@@ -1,0 +1,53 @@
+local _M = { model_name = 'operator_permission' }
+
+
+function _M:update()
+    local id = _http_params('id')
+    assert(_is_valid(id), 'no id')
+
+    local Member = _new_model('operator_permission')
+
+    local memberObj = Member:findFirstById(_http_params('id'))
+    if _is_valid(memberObj) then
+        self:assign(memberObj, 'member')
+        print(_json_encode(memberObj))
+        memberObj:Save()
+    end
+
+    return self:renderJSON()
+end
+
+function _M:create()
+end
+
+function _M:edit()
+    local id = _http_params('id')
+    assert(_is_valid(id), 'no id')
+
+    local _operator = self:model('operator_permission')
+    print('model new:=', _json_encode(_operator))
+
+    local operator = _operator:findFirstById(id)
+
+    assert(operator, 'not find member with id:' .. id)
+
+    self:view('operator_permission', operator):render("admin.operator.edit")
+end
+
+function _M:index()
+
+    local cond = self:getConditions('operator_permission');
+    print('got conditions:==', _json_encode(cond))
+
+    local page = _http_params('page') or 1
+
+    local m = self:model('operator_permission')
+    print(m.member)
+    local res = m:findPagination(cond, page * 1, 30)
+
+    self:view('operator_permissions', res):render("admin.operator.index")
+end
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

@@ -1,0 +1,17 @@
+-- 下载安装Murphy框架前调用此函数
+
+
+
+
+
+
+-- 自己是以download模式安装，则不变，否则复制文件夹 controller,conf,
+
+
+return {
+    run = function(params, lan)
+
+        print('install murphy ...', params, lan)
+
+    end
+}

@@ -1,0 +1,217 @@
+GET http://localhost:9200/_cat/health
+Accept: application/json
+
+###
+
+GET http://localhost:9200/_cat/master
+Accept: application/json
+
+###
+
+# curl -XGET http://localhost:9200/indices
+GET http://localhost:9200/_cat/indices
+Accept: application/json
+
+###
+
+
+
+GET  http://localhost:9200/_cat/nodes
+Accept: application/json
+
+###
+
+
+# curl -XPUT http://localhost:9200/companys
+PUT http://localhost:9200/companys
+
+###
+
+
+# curl -XDELETE http://localhost:9200/companys
+DELETE http://localhost:9200/companys
+
+###
+
+
+# curl -XPOST http://localhost:9200/companys/_mapping -H 'Content-Type:application/json' -d'
+#{
+#        "properties": {
+#            "content": {
+#                "type": "text",
+#                "analyzer": "ik_smart",
+#                "search_analyzer": "ik_smart"
+#            }
+#        }
+#
+#}'
+POST http://localhost:9200/companys/_mapping
+Content-Type: application/json
+
+
+{
+  "properties": {
+    "name": {
+      "type": "text",
+      "analyzer": "ik_smart",
+      "search_analyzer": "ik_smart"
+    },
+    "attr": {
+      "type": "text",
+      "analyzer": "ik_smart",
+      "search_analyzer": "ik_smart"
+    }
+  }
+}
+
+###
+
+
+PUT http://localhost:9200/companys/_doc/1
+Content-Type: application/json
+
+{
+  "addr": "惠州市惠阳区良井镇北联村",
+  "attr": "生产加工 ",
+  "created_at": "1571145394",
+  "id": "6",
+  "name": "惠州市永滋油脂有限公司",
+  "refresh_at": "0"
+}
+
+###
+
+PUT http://localhost:9200/companys/_doc/2
+Content-Type: application/json
+
+{
+  "title": " 鱼粮油食品有限公司",
+  "attr": "生产加工 高油酸 商贸流通 上下游业"
+}
+
+###
+
+# curl -XPOST http://localhost:9200/index/_search  -H 'Content-Type:application/json' -d'
+#{
+#    "query" : { "match" : { "content" : "中国" }},
+#    "highlight" : {
+#        "pre_tags" : ["<tag1>", "<tag2>"],
+#        "post_tags" : ["</tag1>", "</tag2>"],
+#        "fields" : {
+#            "content" : {}
+#        }
+#    }
+#}
+POST http://localhost:9200/companys/_search
+Content-Type: application/json
+
+
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "name": "上海市"
+          }
+        }
+      ]
+    }
+  }
+}
+
+###
+
+# curl -XGET "http://localhost:9200/your_index/_analyze" -H 'Content-Type: application/json' -d'
+#{
+#   "text":"中华人民共和国MN","tokenizer": "my_ik"
+#}'
+GET http://localhost:9200/index/_analyze
+Content-Type: application/json
+
+
+{
+  "text": "鲤鱼",
+  "tokenizer": "ik_smart"
+}
+
+###
+
+
+
+# curl -XPOST http://localhost:9200/index/_search  -H 'Content-Type:application/json' -d'
+#{
+#    "query" : { "match" : { "content" : "中国" }},
+#    "highlight" : {
+#        "pre_tags" : ["<tag1>", "<tag2>"],
+#        "post_tags" : ["</tag1>", "</tag2>"],
+#        "fields" : {
+#            "content" : {}
+#        }
+#    }
+#}
+#'
+POST http://localhost:9200/companys/_search
+Content-Type: application/json
+
+
+{
+  "query": {
+    "match": {
+      "name": "晋江市"
+    }
+  },
+  "highlight": {
+    "pre_tags": [
+      "<tag1>",
+      "<tag2>"
+    ],
+    "post_tags": [
+      "</tag1>",
+      "</tag2>"
+    ],
+    "fields": {
+      "content": {}
+    }
+  }
+}
+
+
+###
+
+# curl -XPOST http://localhost:9200/index/_create/2 -H 'Content-Type:application/json' -d'
+#{"content":"公安部：各地校车将享最高路权"}
+#'
+POST http://localhost:9200/index/_create/5
+Content-Type: application/json
+
+
+{
+  "content": "晋江市金鲮鱼粮油食品有限公司"
+}
+
+
+###
+# curl -XPOST http://localhost:9200/index/_create/2 -H 'Content-Type:application/json' -d'
+#{"content":"公安部：各地校车将享最高路权"}
+#'
+POST http://localhost:9200/index/_create/8
+Content-Type: application/json
+
+
+{
+  "content": "晋江市金鲮鱼粮",
+  "attr": "你好，这是属性测试"
+}
+
+
+###
+
+PUT http://localhost:9200/index/_doc/6
+Content-Type: application/json
+
+{
+  "title": " 鱼粮油食品有限公司",
+  "attr": "生产加工 高油酸 商贸流通 上下游业"
+}
+

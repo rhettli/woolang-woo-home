@@ -1,0 +1,31 @@
+local redis = _import('lib.redis'):new()
+
+print('queue is start ok')
+while true do
+    -- 这里循环取出队列数据 处理
+    _try_lock('_lock_key_QUEUE_DEFAULT_', nil, function()
+        local res = redis:exec('brpop', self.queue_name)
+        if res ~= '' then
+            local js = _json_decode(res)
+            local action = _str_split(js.action, '.')
+            if #action < 2 then
+                action[2] = 'handler'
+            end
+
+            local exec_queue = "local ctrl = _import('queue/%s');ctrl:new();return ctrl:%s,ctrl;"
+            exec_queue = string.format(exec_queue, action[1], action[2])
+            local call, obj = loadstring(exec_queue)()
+            pcall(call, obj, params)
+
+
+        end
+    end)
+    if not _data_get(self.queue_key) then
+        print('queue quit ok!')
+        break
+    end
+    _sleep(100)
+end
+
+
+

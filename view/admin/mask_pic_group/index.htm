@@ -1,0 +1,31 @@
+
+<form action="/admin/mask_pic/index" method="get" class="search_form" autocomplete="off" id="search_form">
+    <label for="id_eq">Id</label>
+    <input name="device[id_eq]" type="text" id="id_eq"/>
+
+    <label for="device_no">ver</label>
+    <input name="device[device_no_eq]" type="text" id="device_no"/>
+
+    <button type="submit" class="ui button">搜索</button>
+ </form>
+
+<div style="margin-top: 18px;">
+   <a href="/admin/mask_pic_group/edit" class="modal_action" style="
+    background-color: #e2e2e2;
+    color: #797979;
+    border: 1px solid #828282;
+    font-size: 1.58rem;
+    padding: 0.3rem 1rem;
+    border-radius: 1rem;
+">新增</a>
+
+    </div>
+
+
+{% macro edit(op) %}
+<a href="/admin/mask_pic_group/edit?id={{op.id}}" class='modal_action'>编辑</a><s> </s>
+<a href="/admin/mask_pic/?mask_pic[mask_pic_group_id_eq]={{op.id}}" target='_blank'>查看印花</a>
+{% /macro %}
+
+
+{% simple_table(mask_pic_groups, {id='ID', name='组名称', status_text='状态',created_at_time='创建时间' , edit='操作' }) %}

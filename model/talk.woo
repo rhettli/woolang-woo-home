@@ -1,0 +1,71 @@
+-- 继承model
+
+local cls_order = {
+    _model = 'talk',
+
+    STATUS_TEXT = { [0] = '待审核', [1] = '通过', [2] = '禁止' },
+}
+
+function cls_order:new()
+    return self
+end
+
+function cls_order:_beforeSave()
+    if not _end_with(self.content, ' ') then
+        self.content = self.content .. ' '
+    end
+end
+
+--- 获取photo
+function cls_order:getPhoto()
+    local p = __model.photo:find({ conditions = 'talk_id=:talk_id:', bind = { talk_id = self.id } })
+    if p and #p > 0 then
+        local photos = {}
+        for _, pos in ipairs(p) do
+            photos[1 + #photos] = pos:toJson()
+        end
+        self.photos = photos
+    else
+        self.photos = {}
+    end
+    return self.photos
+end
+
+--- 获取tags 列表 json数据
+function cls_order:getTagsJson()
+    local tag_map = __model.tag_map_talk:find({ conditions = 'talk_id=' .. self.id })
+    if tag_map and #tag_map > 0 then
+        local tag_ids = {}
+        for _, v in ipairs(tag_map) do
+            tag_ids[1 + #tag_ids] = v.tag_id
+        end
+
+        local tags = __model.tag:findByIds(tag_ids)
+        local tag_json = {}
+
+        for _, tag in ipairs(tags) do
+            tag_json[1 + #tag_json] = { title = tag.title, id = tag.id }
+        end
+        return _json_encode(tag_json)
+    end
+    return ''
+end
+
+function cls_order:_afterSave()
+
+    print('after save...')
+end
+
+function cls_order:toJson()
+    return {
+        id = self.id,
+        cny_amount = self.cny_amount,
+        payment_no = self.payment_no,
+        created_at = self.created_at_time,
+        product_name = self.product_name,
+        status = self.status_text,
+    }
+end
+
+cls_order = _extend(cls_order, 'oshine/woo_mvc@1.?:model')
+return cls_order.super[1](cls_order)

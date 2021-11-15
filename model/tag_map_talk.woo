@@ -1,0 +1,21 @@
+local _M = {
+    _model = 'tag_map_talk'
+}
+
+function _M:new()
+
+    self.STATUS_TEXT = { [0] = '待审核', [1] = '正常' }
+
+    return self
+end
+
+function _M:toJson()
+    return {
+        id = self.id,
+
+    }
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)
+

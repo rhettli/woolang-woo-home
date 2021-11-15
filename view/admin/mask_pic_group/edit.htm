@@ -1,0 +1,11 @@
+{% local t=simple_form(mask_pic_group, {}) %}
+
+{% t.select('status',{  label='状态' } ) %}
+<!-- t.select('status',{  label='状态', collection = { [2] ="无效" , [1] ="有效" } } ) -->
+
+
+{% t.input('name',{  label='组名称'} ) %}
+
+
+{% t.submit('保存') %}
+{% t.render() %}

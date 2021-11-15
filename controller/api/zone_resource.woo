@@ -1,0 +1,40 @@
+local zone_resource = {}
+
+function zone_resource:list()
+    local id = _http_params('id')
+    if id == '11' then
+        --    0: {ID: 2, Name: "汪星人", SubName: "汪星人", Icon: "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png",…}
+        --    Background: "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png"
+        --    ID: 2
+        --    Icon: "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png"
+        --    IconB: "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png"
+        --    Name: "汪星人"
+        --    SubName: "汪星人"
+        --    ZoneResourceList: [,…]
+        --    0: {ID: 3, ZoneID: 2, CtrType: 11, Image: "https://t.irocks.cn/cherry_custom/imgs/manual/front3.png",…}
+        --    Content: ""
+        --    CtrType: 11
+        --    ID: 3
+        --    Image: "https://t.irocks.cn/cherry_custom/imgs/manual/front3.png"
+        --ImageLg: ""
+        --ImageSm: ""
+        --ZoneID: 2
+
+        local mpic = __model.mask_pic:find()
+
+
+        local res = [[
+{"code":0,"data":[{"ID":2,"Name":"\u6c6a\u661f\u4eba","SubName":"\u6c6a\u661f\u4eba","Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/banner2.png","IconB":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/banner2.png","Background":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/banner2.png","ZoneResourceList":[{"ID":3,"ZoneID":2,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/front3.png","ImageSm":"","ImageLg":"","Content":""},{"ID":4,"ZoneID":2,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/front4.png","ImageSm":"","ImageLg":"","Content":""}]},{"ID":3,"Name":"\u718a\u661f\u4eba","SubName":"\u718a\u661f\u4eba","Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/bear_banner.png","IconB":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/bear_banner.png","Background":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/bear_banner.png","ZoneResourceList":[{"ID":5,"ZoneID":3,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/black_bear.png","ImageSm":"","ImageLg":"","Content":""},{"ID":6,"ZoneID":3,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/pink_bear.png","ImageSm":"","ImageLg":"","Content":""},{"ID":12,"ZoneID":3,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/bear3.png","ImageSm":"","ImageLg":"","Content":""}]},{"ID":5,"Name":"\u55b5\u661f\u4eba","SubName":"\u55b5\u661f\u4eba","Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/banner1.png","IconB":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/banner1.png","Background":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/banner1.png","ZoneResourceList":[{"ID":1,"ZoneID":5,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/front1.png","ImageSm":"","ImageLg":"","Content":""},{"ID":2,"ZoneID":5,"CtrType":11,"Image":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/front2.png","ImageSm":"","ImageLg":"","Content":""}]}],"message":""}
+    ]]
+        _out(res)
+
+    end
+end
+
+function zone_resource:new()
+    return self
+end
+
+zone_resource = _extend(zone_resource, "controller/api/_base")
+
+return zone_resource.super[2](zone_resource)

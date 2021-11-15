@@ -1,0 +1,12 @@
+return {
+    _zh = '切换到中文显示',
+    zh = function(p, lan)
+        print('以切换到中文显示')
+        _file_save('.lan', 'zh')
+    end,
+    en = function(p, lan)
+        print('already switch english')
+        _file_save('.lan', 'en')
+    end,
+    _en = 'switch to english'
+}

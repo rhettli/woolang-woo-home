@@ -1,0 +1,221 @@
+<!--<link rel="stylesheet" href="https://res.wx.qq.com/community/dist/community/styles.15ccb59ee39995ce8584.css">-->
+<!--<link rel="stylesheet" href="https://res.wx.qq.com/community/dist/community/app.15ccb59ee39995ce8584.css">-->
+<link rel="stylesheet" type="text/css" href="/static/css/member/home/notify~personFollow.css">
+<link rel="stylesheet" type="text/css" href="/static/css/member/home/notify.css">
+<!--<link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/community/dist/community/personArticle.15ccb59ee39995ce8584.css">-->
+
+<div id="body" class="body page_simple" style="min-height: 957px;margin-top: 18px">
+    <div class="container_box full_container_box">
+        <div class="home_page page_personal">
+            <div class="main_bd">
+                <div class="personal_header personal_header_personage">
+                    <img alt="用户头像" class="base-info__avatar" :src="member.avatar" style="border-radius:.3rem;">
+                    <div class="home_page_hd_bd"><strong class="base-info__name" v-html="member.nickname">nickname
+                        <a href="javascript:;" class="base-info__name__extend for_mobile">切换主页</a></strong>
+                        <span style="color: #9a9a9a" v-html="'@'+member.username">username</span>
+                        <div class="base-info__descbox"><p class="base-info__desc js_introduce" v-html="member.words">
+                            暂无个人介绍</p></div>
+                        <div class="base-info" v-if="member.id==login_member.id">
+                            <div class="base-info__ft"><a href="/member/edit" class="btn btn_default">编辑资料</a></div>
+                        </div>
+                    </div>
+                    <div class="home_page_hd_footer"><a
+                            href="/member/follow" target="_blank"
+                            class="home_page_hd_footer_item follow group"><p class="home_page_hd_footer_item_hd"><span
+                            class="home_page_hd_footer_item_ic"></span>正在关注</p>
+                        <p class="home_page_hd_footer_item_bd">1</p></a><a
+                            href="/member/follower" target="_blank"
+                            class="home_page_hd_footer_item follower group"><p class="home_page_hd_footer_item_hd"><span
+                            class="home_page_hd_footer_item_ic"></span>关注者</p>
+                        <p class="home_page_hd_footer_item_bd">0</p></a></div>
+                    <div></div>
+                </div>
+                <div class="two_columns clear_fix">
+                    <div class="two_columns_left">
+                        <div class="mode__grow-up-summary">
+                            <div class="grow-up-summary__inner">
+                                <div class="grow-up-summary__head">
+                                    <div title="成长等级：1" class="mode__grow-up-tag mode__grow-up-tag__middle"><span
+                                            class="grow__up__tag__icon grow__up__tag__growup1__icon grow__up__tag__growup1__icon"></span>
+                                    </div>
+                                    <a href="/community/growupcenter">
+                                        <div class="grow-up-summary__head__extend">成长中心</div>
+                                    </a></div>
+                                <div class="grow-up-summary__body">
+                                    <div class="grow-up-summary__process">
+                                        <div class="grow-up-summary__current" style="width: 23%;"></div>
+                                    </div>
+                                    <div class="grow-up-summary__body__footer"><p
+                                            class="grow-up-summary__body__footer__head">昨日贡献 <span
+                                            class="hightline">1</span></p>
+                                        <p class="grow-up-summary__body__footer__footer"><span
+                                                class="hightline">23</span> / 100</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="two_columns_left_main">
+                            <div class="rewards_info_box_container">
+                                <div class="columns_right_box info_box">
+                                    <div class="extra-info">
+                                        <div class="extra-info__hd"><i class="icon_post_opr like_profile"></i>
+                                            <span data-component-identifier="selfcenter__evaluation-total-upvote"
+                                                  class="extra-info__title">获得过 <span>0</span> 次赞</span></div>
+                                        <div class="extra-info__bd">
+                                            <div class="extra-info__item">
+                                                <div data-component-identifier="selfcenter__evaluation-answer"
+                                                     class="extra-info__label tips_global">回答过的问题获得 0 次赞
+                                                </div>
+                                            </div>
+                                            <div class="extra-info__item">
+                                                <div data-component-identifier="selfcenter__evaluation-share"
+                                                     class="extra-info__label tips_global">分享过的文章/案例获得 0 次赞
+                                                </div>
+                                            </div>
+                                            <div class="extra-info__item">
+                                                <div data-component-identifier="selfcenter__evaluation-comment"
+                                                     class="extra-info__label tips_global">评论与回复获得 0 次赞
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="personal_box_container"></div>
+                        </div>
+                        <div class="columns_right_box extra-info__github" style="">
+                            <div class="mod_default_hd"><h4><i class="icon-title-before__git"></i>手机号码</h4>
+                                <div class="mod_hd_extra" style=""><a href="javascript:;" class="btn btn_primary">绑定</a>
+                                </div>
+                            </div>
+                            <div class="mod_default_hd" style="margin-top:20px"><h4><i
+                                    class="icon-title-before__git"></i>微信</h4>
+                                <div class="mod_hd_extra" style=""><a href="javascript:;"
+                                                                      class="btn btn_default">已绑定</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="two_columns_right">
+                        <div class="mod_default_boxes">
+                            <div class="mod_default_box weapp-case__area">
+                                <div class="mod_default_hd"><h4 class="mod-title_with-after">个人案例</h4></div>
+                                <div class="mod_default_bd">
+                                    <div class="empty_item"><p class="empty_title">展示我的小程序/插件优秀案例</p>
+                                        <p class="empty_opr"><a href="javascript:;" class="btn btn_primary js_add_case">前往添加</a>
+                                        </p></div>
+                                </div>
+                            </div>
+                            <div class="mod_default_box classify-list_box">
+                                <div class="activity-info">
+                                    <div id="personaltab" class="post_tags_tab select_tags_wrp"><span
+                                            class="post_tags no-popover">
+                                        <a class="post_tag selected" @click="talkClick">话题
+            <span class="count-tip">0</span></a></span><span class="post_tags no-popover"><a
+                                            @click="answerClick" class="post_tag">回答
+            <span class="count-tip">0</span></a></span><span class="post_tags no-popover"><a
+                                            @click="thankClick" class="post_tag">感谢
+            <span class="count-tip">1</span></a></span><span class="post_tags no-popover"><a
+                                            @click="favClick" class="post_tag">收藏
+            <span class="count-tip">1</span></a></span><span class="post_tags no-popover"><a
+                                            @click="followClick" class="post_tag">关注问题
+            <span class="count-tip">0</span></a></span></div>
+                                    <div class="empty_item"><p class="tips_global">暂无发表帖子</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dialog_wrapper dialog_with_head" style="display:none;">
+                    <div class="dialog_wrp_new dialog_component" style="width:1000px;">
+                        <div class="dialog"><a href="javascript:;" class="icon16_opr closed pop_closed">关闭</a>
+                            <div class="dialog_hd"><h3>选择需要上架的开放服务</h3></div>
+                            <div class="dialog_bd">
+                                <div class="services-type__content">
+                                    <ul class="services-type__list">
+                                        <li class="services-type__item">
+                                            <div class="services-type__card"><strong>模板开发</strong>
+                                                <p>针对行业、场景的小程序代开发服务，帮助企业快速搭建小程序</p>
+                                                <a href="javascript:;" class="btn btn_primary">上架</a>
+                                            </div>
+                                        </li>
+                                        <li class="services-type__item">
+                                            <div class="services-type__card"><strong>插件</strong>
+                                                <p>提供可被小程序直接使用、丰富小程序能力的功能模块</p>
+                                                <a href="javascript:;" class="btn btn_primary">上架</a></div>
+                                        </li>
+                                        <li class="services-type__item">
+                                            <div class="services-type__card"><strong>小商店服务</strong>
+                                                <p>为小商店商家提供更多的能力，帮助商家经营好小商店</p>
+                                                <a href="javascript:;" class="btn btn_primary">上架</a></div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dialog_wrapper dialog_case_choose dialog_with_head" style="display:none;">
+                    <div class="dialog_wrp_new dialog_component" style="width:585px;">
+                        <div class="dialog"><a href="javascript:;" class="icon16_opr closed pop_closed">关闭</a>
+                            <div class="dialog_hd"><h3>案例类型</h3></div>
+                            <div class="dialog_bd">
+                                <div class="post_type_content">
+                                    <ul class="post_type_list choose_case_list">
+                                        <li class="post_type_item"><a href="javascript:;"><i
+                                                class="icon icon_weapp"></i><strong>小程序</strong></a></li>
+                                        <li class="post_type_item"><a href="javascript:;"><i
+                                                class="icon icon_plugin"></i><strong>插件</strong></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    // vue渲染Home页面
+
+    const _vue = new Vue({
+        el: "#body",
+        data: {
+            is_login: !!checkLogin(),
+            member: {}, // 默认查看自己的主页
+            login_member: {}, // 当前登陆用户
+
+        },
+        created: function () {
+            let self = this
+            let id = '{{data.member_id}}'
+            if (id === '') return;
+            ajax('/member/ajaxInfo', 'POST', 'json', {id}, null, function (res) {
+                if (res.code == 0) {
+                    self.member = res.data
+                }
+            })
+            let lm = localStorage.getItem('_member')
+            if (lm) {
+                this.login_member = JSON.parse(lm)
+            }
+        },
+        computed: {},
+        methods: {
+            followClick() {
+            },
+            talkClick() {
+            },
+            answerClick() {
+            },
+            thankClick() {
+            },
+            favClick() {
+            },
+            headClick() {
+            }
+        }
+    })
+</script>

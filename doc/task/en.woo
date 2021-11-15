@@ -1,0 +1,16 @@
+return {
+    print = function(k)
+        local filter = {}
+        filter.cli = [[
+run a console , and you can run woo script in it.
+eg:<fg=11aa23>woo murphy cli</> to start a console
+and then you can run script like bellow:
+<cyan>__model.member:findFirstById(100).id</>
+<cyan>:local member = __model.member:findFirstById(100) ;print(member.nickname, member.id)</>
+
+    ]]
+
+        _color('diy', filter[k])
+
+    end
+}

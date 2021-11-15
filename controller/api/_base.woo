@@ -1,0 +1,159 @@
+---api 基础类，用于鉴权，基础controller配置
+---@author LiYanXi
+---@language woo
+---@class _base
+local cls_base = {
+    --- 跳过鉴权的router
+    skip_router = {
+        member = { 'login', 'reg', 'xcxBind', 'code_login' },
+        pay = { 'start', 'status' },
+        package = { 'search' },
+    }
+}
+
+function cls_base:new()
+
+    if not self:checkRouter() then
+        print('router check fail')
+        if not self:checkAuth() then
+            -- -2 表示未登录，需要登陆
+            self:renderJSON(nil, 'Auth Fail.', -2)
+            assert(false, 'auth fail exit')
+            --os.exit(0)
+        end
+
+    end
+
+    return self.super[1](self)
+end
+
+-- check short psw [检查短密码]
+function cls_base:checkShortPsw()
+    local _res_check_psw = self._res_check_psw
+
+    if _res_check_psw ~= nil then
+        return _res_check_psw[1], _res_check_psw[2]
+    end
+    local sp = _http_params('sp')
+    if not _is_valid(sp) then
+        _res_check_psw = { false, 'sp invalid' }
+    end
+    local member = self:currentMember()
+    if not _is_valid(member.sp) then
+        _res_check_psw = { false, 'no sp' }
+    end
+    if member.sp ~= sp then
+        _res_check_psw = { false, 'sp invalid' }
+    elseif member.sp_expire_time > _time() then
+        _res_check_psw = { true }
+    else
+        _res_check_psw = { false, 'sp expire' }
+    end
+    self._res_check_psw = _res_check_psw
+    return _res_check_psw[1], _res_check_psw[2]
+end
+
+--- enable this function ,you must config redis in conf/conf.lua [检查某个key是否达到足够的total次数，在in_second秒内]
+function cls_base:checkEnoughTimes(key, total, in_second)
+    local ch = __REDIS_CACHE0()
+    if ch then
+        key = '__check_lock' .. key
+        total = total or 50
+        in_second = in_second or 5
+        local r = ch:exec('get', key)
+        if r == nil then
+            local res = ch:exec('SETEX', key, in_second, 1)
+            --print('set to cache:', res)
+        else
+            if tonumber(r) > total then
+                return true
+            end
+            local res = ch:exec('incr', key)
+            --print('set to cache:', res)
+            return false
+        end
+    end
+    -- print('Call check,must config [redis0] at conf/conf.woo')
+    return true
+end
+
+function cls_base:currentMember()
+    if self._curr_member then
+        return self._curr_member
+    end
+    self._curr_member = _new_model('member'):findFirstBy('id', self:currentMemberId())
+    return self._curr_member
+end
+
+function cls_base:currentMemberId()
+    if self._sid1 then
+        return self._sid1
+    end
+    local sid = _str_split(_http_header('sid'), '.')
+    if sid[1] then
+        --sid[1] = tonumber(sid[1])
+        self._sid1 = sid[1]
+        return sid[1]
+    end
+end
+
+-- sid支持多端登录，使用redis存储
+function cls_base:checkAuth()
+    local sid = _http_header('sid')
+    print(sid)
+    if sid then
+        local sp = _str_split(sid, '.')
+
+        if #sp ~= 2 then
+            return false
+        end
+
+        --local rds = __REDIS_CACHE0()
+        --local r = rds:exec('SISMEMBER', '$_sid_' .. member_id, sid)
+
+        local member = __model.member:findFirstBy('id', sp[1])
+
+        print(member.id, member.sid)
+        if _is_valid(member) and member.sid == sid then
+            self._sid1 = sid[1]
+            self._curr_member = member
+            return true
+        end
+
+        --if r then
+        --    -- 判断sid是否过期
+        --    if tonumber(sp[3]) < _time() then
+        --        -- 过期，主动清理
+        --        local r = rds:exec('SREM', '$_sid_' .. member_id, sid)
+        --        rds:close()
+        --        return false
+        --    end
+        --    rds:close()
+        --    return true
+        --end
+        --rds:close()
+    end
+    return false
+end
+
+function cls_base:checkRouter()
+    if self.skip_router then
+        for i, v in pairs(self.skip_router) do
+            local action = __STR_SUB_TO_LEFT(_ACCESS_FILE, '/')
+            print('action:==', action)
+            print(_ACCESS_FILE, _ACCESS_METHOD)
+            if action == i then
+                for _, p in pairs(v) do
+                    if p == _ACCESS_METHOD then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+return _extend(cls_base, "oshine/woo_mvc@1.?:controller")
+
+--return _extend(class_base, "oshine/woo_mvc@1.?:controller", { skip_router = skip_router })

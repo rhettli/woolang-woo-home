@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ admin_name }}管理后台</title>
+
+    <script src="/static/js/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/static/js/vue/2.0.5/vue.min.js"></script>
+    <script src="/static/js/jquery.form/3.51.0/jquery.form.js"></script>
+    <script src="/static/js/wangEditor.min.js"></script>
+    <script src="/static/framework/bootstrap.select/1.13.7/js/bootstrap-select.min.js"></script>
+    <script src="/static/framework/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="/static/framework/bootstrap.datepicker/1.4.0/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="/static/framework/bootstrap.datepicker/1.4.0/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+    <script src="/static/framework/bootstrap.datepicker/1.5.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="/static/framework/bootstrap.datepicker/1.5.0/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+    <script src="/static/js/juicer/0.6.9/juicer-min.js"></script><script src="/static/js/echarts/3.7.2/echarts.js"></script>
+    <script src="/static/js/echarts/3.7.2/chalk.js"></script><script src="/static/js/echarts/3.7.2/china.js"></script>
+    <script src="/static/js/admin.js"></script>
+    <script src="/static/framework/bootstrap.select/1.13.7/js/i18n/defaults-zh_CN.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="/static/framework/bootstrap/3.3.4/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/framework/bootstrap.datepicker/1.4.0/css/bootstrap-datetimepicker.min.css"></style>
+    <link rel="stylesheet" type="text/css" href="/static/framework/bootstrap.datepicker/1.5.0/css/bootstrap-datepicker.min.css"></link>
+    <link rel="stylesheet" type="text/css" href="/static/framework/bootstrap.select/1.13.7/css/bootstrap-select.min.css"></link>
+    <link rel="stylesheet" type="text/css" href="/static/css/admin.css"></link>
+
+</head>
+<body>
+
+<nav class="navbar navbar-default navbar-static-top {%if is_development  then %}dev_navbar{% endif %}" role="navigation"
+     style="padding-left: 10px;padding-right: 10px;">
+
+    <ul class="nav navbar-nav">
+        {%if __IS_ALLOWED('operator','dashboard')  then %}
+            <li>
+                <a href="/admin/operator/dashboard">看板</a>
+            </li>
+        {% endif %}
+
+        {%if __IS_ALLOWED('users','index') or __IS_ALLOWED('devices','index')  then %}
+            <li>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">口罩管理<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    {%if __IS_ALLOWED('users','index')  then %}
+                        <li>
+                            <a href="/admin/member/">用户列表</a>
+                        </li>
+                    {% endif %}
+                    {%if __IS_ALLOWED('device','index')  then %}
+                        <li>
+                            <a href="/admin/device/">用户设备列表</a>
+                        </li>
+                    {% endif %}
+                    {%if __IS_ALLOWED('sms_his','index')  then %}
+                        <li><a href="/admin/sms_his/">短信验证列表</a></li>
+                    {% endif %}
+
+                    {%if __IS_ALLOWED('order','index')  then %}
+                        <li><a href="/admin/order/">订单列表</a></li>
+                    {% endif %}
+
+                    {%if __IS_ALLOWED('mask_pic_group','index')  then %}
+                       <li class="dropdown-submenu">
+                             <a href="javascript:;" tabindex="-1">印花管理</a>
+                             <ul class="dropdown-menu">
+                                     {%if __IS_ALLOWED('mask_pic_group','index')  then %}
+                                           <li><a href="/admin/mask_pic_group/">印花组</a></li>
+                                     {% endif %}
+                                     {%if __IS_ALLOWED('mask_pic','index')  then %}
+                                           <li><a href="/admin/mask_pic/">印花列表</a></li>
+                                     {% endif %}
+                                     {%if __IS_ALLOWED('mask_pic_diy','index')  then %}
+                                           <li><a href="/admin/mask_pic_diy/">用户上传印画</a></li>
+                                     {% endif %}
+                             </ul>
+                        </li>
+                    {% endif %}
+
+                    {%if __IS_ALLOWED('mask_obj','index')  then %}
+                        <li><a href="/admin/mask_obj/">口罩模型列表</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+        {% endif %}
+
+        {%if __IS_ALLOWED('third_photo','index')  then %}
+            <li>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">用户画像<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    {%if __IS_ALLOWED('action','index')  then %}
+                    <li>
+                        <a href="/admin/action/">活动监测</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </li>
+        {% endif %}
+
+        <!-- 系统 -->
+        {% if __IS_ALLOWED('operators','index') then %}
+
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    系统<b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                    {%if __IS_ALLOWED('operators','index') or __IS_ALLOWED('operators','operator_login_histories')  then %}
+                        <li class="dropdown-submenu">
+                            <a href="javascript:;" tabindex="-1">操作员管理</a>
+                            <ul class="dropdown-menu">
+                                {%if __IS_ALLOWED('operator','index')  then %}
+                                    <li><a href="/admin/operator/list">操作员列表</a></li>
+                                {% endif %}
+                                {%if __IS_ALLOWED('operator','index')  then %}
+                                    <li><a href="/admin/operator_role/">角色权限</a></li>
+                                {% endif %}
+                                {%if __IS_ALLOWED('operator_login_histories','operator_login_histories')  then %}
+                                    <li><a href="/admin/operator/login_his">登录记录</a></li>
+                                {% endif %}
+                                {%if __IS_ALLOWED('operating_records','index')  then %}
+                                    <li><a href="/admin/operator/action_record">操作记录</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                    {% endif %}
+
+                </ul>
+            </li>
+        {% endif %}
+
+
+        <!--监控管理-->
+        {%if __IS_ALLOWED('monitor','redis')  then %}
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">监控<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    {%if __IS_ALLOWED('monitor','redis')  then %}
+                        <li><a href="/admin/monitor/redis" target="_blank">异步监控()</a></li>
+                    {% endif %}
+                    {%if __IS_ALLOWED('monitor','process')  then %}
+                        <li><a href="/admin/monitor/process" target="_blank">进程监控()</a></li>
+                    {% endif %}
+                    {%if __IS_ALLOWED('monitor','log')  then %}
+                        <li><a href="/admin/monitor/log" target="_blank">日志监控()</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+        {% endif %}
+
+    </ul>
+
+    <ul class="nav navbar-nav navbar-right">
+        <li><a>{{ operator_username }}</a></li>
+        <li><a href="/admin/home/logout">注销</a></li>
+    </ul>
+
+<!--     {%if __IS_ALLOWED('document_articles','index')  then %} -->
+<!--         <ul class="nav navbar-nav navbar-right"> -->
+<!--             <li> -->
+<!--                 <a target="_blank" href="/admin/document_articles/index?action={{ controller_name }}" >文档管理</a> -->
+<!--             </li> -->
+<!--         </ul> -->
+<!--     {% endif %} -->
+</nav>
+
+<div style="padding:0 15px;">
+    {{#content#}}
+</div>
+
+</body>
+</html>

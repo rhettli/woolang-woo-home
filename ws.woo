@@ -1,0 +1,22 @@
+-- 异步函数
+--go(function(r1, r2)
+--    print('==', r1, r2)
+--    --out(r1, r2, "|789")
+--
+--    --return "--"
+--end, 'hello', 87654)
+
+local base64 = _base64_encode('hello world!')
+-- 把数据写到文件
+
+_out(base64 .. " \r\n")
+
+local decode = _base64_decode(base64)
+_out(decode .. " \r\n")
+
+_out(_http_request('path') .. " path\r\n")
+_out(_http_request('host') .. " host\r\n")
+_out(_http_request('uri') .. " uri\r\n")
+_out(_http_params('op') .. " params op\r\n")
+
+_out(_time() .. "\r\n")

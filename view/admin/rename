@@ -1,0 +1,6 @@
+find ./ -name *.volt  | while read i
+do
+        echo "$i";
+        mv $i  $i.htm
+done
+

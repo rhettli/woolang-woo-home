@@ -1,0 +1,34 @@
+-- 验证码
+
+local _M = {_model = 'captcha'}
+
+function _M:new()
+    return self
+end
+
+_M.STATUS_TEXT = { [0] = '待验证', [1] = '已经验证', [2] = '废弃' }
+
+function _M:__beforeSave()
+    print('before save...')
+end
+
+function _M:__afterSave()
+    print('after save...')
+end
+
+--- 新建验证码记录
+function _M:create(member_id, code, ip, tp)
+    self.member_id = member_id
+    self.code = code
+    self.ip = ip
+    self.tp = tp
+    self:save()
+    return self
+end
+
+function _M:toJson()
+
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)

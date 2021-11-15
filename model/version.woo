@@ -1,0 +1,33 @@
+-- 继承model
+
+local _M = { _model = 'version' }
+
+function _M:new()
+
+
+    return self
+end
+
+_M.STATUS_TEXT = { [0] = '不可用', [1] = '可用' }
+
+function _M:_beforeSave()
+    print('before save...')
+end
+
+function _M:_afterSave()
+
+    print('after save...')
+end
+
+function _M:toJson()
+    return {
+        id = self.id,
+        ver = self.ver * 1,
+        addr = self.addr,
+        code = self.code,
+        force = self.force * 1
+    }
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)

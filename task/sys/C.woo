@@ -1,0 +1,8 @@
+return {
+    _new = {zh='新建Model，例：woo murphy M new [model name]',en='add new Model,eg:woo murphy M new [model name]'},
+    new = function(p, lan)
+        print('以切换到中文显示')
+        _file_save('.lan', 'zh')
+    end,
+    
+}

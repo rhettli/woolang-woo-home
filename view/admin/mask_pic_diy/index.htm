@@ -1,0 +1,40 @@
+
+<form action="/admin/mask_pic/index" method="get" class="search_form" autocomplete="off" id="search_form">
+    <label for="id_eq">Id</label>
+    <input name="device[id_eq]" type="text" id="id_eq"/>
+
+    <label for="device_no">ver</label>
+    <input name="device[device_no_eq]" type="text" id="device_no"/>
+
+    <button type="submit" class="ui button">搜索</button>
+ </form>
+
+<div style="margin-top: 18px;">
+   <a href="/admin/mask_pic/edit" class="modal_action" style="
+    background-color: #e2e2e2;
+    color: #797979;
+    border: 1px solid #828282;
+    font-size: 1.58rem;
+    padding: 0.3rem 1rem;
+    border-radius: 1rem;
+">新增</a>
+
+    </div>
+
+{% macro img_url(op) %}
+<!-- img标签添加 classs:image_once_click 后可以鼠标点击查看大图  -->
+<img class='avatar image_once_click' src="https://print.sumaophoto.net/static/pic/{{op.path}}" style='width:100px;height:100px'/>
+{% /macro %}
+
+{% macro edit(op) %}
+<a href="/admin/mask_pic/edit?id={{op.id}}" class='modal_action'>编辑</a>
+{% /macro %}
+
+{% macro memberName(op) %}
+用户id：{{op.id}}
+用户昵称：{{op.member.nickName}}
+{% /macro %}
+
+
+
+{% simple_table(mask_pic_diys, {id='ID', img_url='印花图片', md5='md5值', memberName='上传用户',status_text='状态',created_at_time='创建时间' , edit='操作' }) %}

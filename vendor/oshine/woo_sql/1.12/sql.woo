@@ -1,0 +1,113 @@
+local _M = {
+    _sql = '',
+    --- sql line，如果是sql，则元素仅仅为字符串，否则为注释，使用table表示
+    lines = {},
+    index = 0
+}
+
+--- 初始化
+---@param sql string@sql文本
+---@return self
+function _M:new(sql)
+
+    self._sql = sql
+
+    return self
+end
+
+--- 解析sql文本，必须先调用此函数，才能调用nextLine()函数
+function _M:parse()
+    self. lines = {}
+    self. index = 0
+
+    local mline = _str_split(self._sql, '\n')
+
+    local str = ''
+    for _, v in pairs(mline) do
+        v = _rtrim(v)
+        if v ~= '' then
+            str = str .. v .. '\n'
+            if _begin_with(_ltrim(str), '--') then
+                self.lines[#self.lines + 1] = { str } -- 注释
+                str = ''
+            elseif _end_with(v, ';') or _end_with(v, '-- DONE') then
+                self.lines[#self.lines + 1] = str
+                str = ''
+            end
+        end
+    end
+
+    if str ~= '' then
+        if _begin_with(_ltrim(str), '--') then
+            self.lines[#self.lines + 1] = { str } -- 注释
+        else
+            self.lines[#self.lines + 1] = str
+        end
+    end
+
+    _out(self.lines, '\n')
+
+    return self
+end
+
+---把所有sql line重新序列化为sql
+function _M:toSql()
+
+    local sql = ''
+    for _, v in pairs(self.lines) do
+        if type(v) == 'table' then
+            sql = sql .. v[1] .. '\n'
+        else
+            sql = sql .. v .. '\n\n'
+        end
+
+    end
+
+    return sql
+end
+
+function _M:done(index)
+    index = index or self.index
+    self.lines[index] = _rtrim(self.lines[index], '\n') .. ' -- DONE'
+    return self
+end
+
+function _M:offset(index)
+    index = index or 0
+    self.index = index
+end
+
+--- 读取下一行
+---@param skipDone boolean@ 是否忽略已完成的sql行，默认为false
+function _M:nextLine(skipDone)
+
+    if skipDone then
+        while true do
+            self.index = self.index + 1
+            local r = self.lines[self.index]
+            if not r then
+                return nil
+            end
+
+            -- 忽略注释
+            if type(r) == 'table' then
+                return self:nextLine(skipDone)
+            end
+
+            -- 忽略已完成和注释
+            if _end_with(_rtrim(r, ' \n'), '-- DONE') then
+                return self:nextLine(skipDone)
+            end
+            return r
+        end
+    end
+
+    self.index = self.index + 1
+    local r = self.lines[self.index]
+    if _begin_with(r, '--') then
+        return self:nextLine(skipDone)
+    end
+    return self.lines[self.index]
+end
+
+return _M

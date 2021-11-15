@@ -1,0 +1,12 @@
+return {
+
+
+    --:task-begin:forbidden--
+    _forbidden = { zh = '禁止一个用户登陆,如：woo murphy member forbidden :id 100  ,即表示禁止id=100的用户登陆', en = 'forbidden a user to login' },
+    forbidden = function(args, lan)
+
+    end,
+    --:task-begin:forbidden--
+
+
+}

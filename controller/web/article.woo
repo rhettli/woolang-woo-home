@@ -1,0 +1,136 @@
+local class_project = {}
+
+function class_project:new(o)
+    o = o or {}
+    --setmetatable(o, self)
+    --self.__index = self
+
+    self.version = "1"
+
+    return self
+end
+
+function class_project:search()
+    -- every 5 second only handle 2 request,need redis to storage.
+    if self:checkEnoughTimes('_p_search:'..http_ip(), 2, 5) then
+        return self:renderJSON(nil, 'Do not operate too much times', -1)
+    end
+
+    local package_name = http_params('package_name')
+    if not is_valid(package_name) then
+        return self:renderJSON(nil, 'package_name can be empty,you can search member\'s package just use like:oshine/* or oshine/bitmap or bitmap', -1)
+    end
+
+    _package = _new_model('cw_package')
+    mod = _new_model('member')
+
+    package_name = str_split(package_name, '/')
+    if #package_name > 1 then
+        local member = mod:findFirstBy('username', package_name[1])
+        if not is_valid(member) then
+            return self:renderJSON(nil, 'package_name can be ', -1)
+        end
+        local package = _package:findFirst({ conditions = 'member_id=:member_id: and name like :name:', bind = { member_id = member.id, name = '%' .. package_name[2] .. '%' } })
+        if not is_valid(package) then
+            return self:renderJSON(nil, 'package not match with:' .. package_name, -1)
+        end
+
+        return self:renderJSON({ package:toJson() }, '')
+    else
+        local packages = _package:findPagination({ conditions = 'name like :name:', bind = { name = '%' .. package_name[1] .. '%' } }, 1, 20)
+        if packages.len() < 1 then
+            return self:renderJSON(nil, 'package not match with:' .. package_name[1], -1)
+        end
+
+        local json = {}
+        packages.each(function(ind, package)
+            json[1 + #json] = package:toJson()
+        end)
+        return self:renderJSON(json, '')
+    end
+end
+
+function class_project:add()
+    local p = http_params('package_name', 'git_source')
+    local package_name = p.package_name
+    local git_source = p.git_source
+
+    if not is_valid(package_name) then
+        return self:renderJSON(nil, 'package_name empty', -1)
+    end
+
+    if not is_valid(git_source) then
+        return self:renderJSON(nil, 'git_source empty,git_source like:gitee.com/oshine/cwm,github.com/rhettli/cwm ;multi source split with (,)', -1)
+    end
+
+    local port, platform, title, remark
+
+    local git_source_arr = str_split(git_source, ',')
+    if #git_source_arr > 0 then
+        local http = require('http')
+        local url = ''
+        --git_source_arr[1] = rtrim(git_source_arr[1], '.git')
+        if str_index(git_source_arr[1], 'gitee.com/') > -1 then
+            --gitee https://gitee.com/oshine/cwm/raw/master/package.lua
+
+            url = 'https://' .. git_source_arr[1] .. '/raw/master/package.lua'
+        elseif str_index(git_source_arr[1], 'github.com/') > -1 then
+            --https://raw.githubusercontent.com/curl/curl/master/buildconf.bat
+
+            url = 'https://raw.githubusercontent.com/' .. git_source_arr[1] .. '/master/package.lua'
+        end
+        local r, e = http.request('get', url, { headers = { ['User-Agent'] = 'curl/7.70.0/cwm_1.0' } })
+        if e then
+            return self:renderJSON(nil, e .. 'make sure there have a package.lua file in root dir,can\'t access ' .. url, -1)
+        elseif r['status_code'] == 200 then
+            local package = loadstring(r.body)()
+            platform = package.platform or 'all'
+            port = package.port
+            title = package.title
+            remark = package.remark
+            if not package.package_name then
+                return self:renderJSON(nil, 'package_name in git_source\'s package.lua is empty', -1)
+            end
+
+            if package_name ~= package.package_name then
+                return self:renderJSON(nil, 'you typed package_name not equal package_name in file package.lua,your\'s:' ..
+                        package_name .. ',git_source you gived:' .. package.package_name, -1)
+            end
+            package_name = str_split(package_name, '/')
+            if #package_name ~= 2 then
+                return self:renderJSON(nil, 'package_name can only like:a/b;  [a/b/c or a] is forbidden,and [a] is your username', -1)
+            end
+            package_name = package_name[2]
+        else
+            return self:renderJSON(nil, 'git source not available,url:' .. url, -1)
+        end
+    end
+
+    if str_index(package_name, '/') > -1 or str_index(package_name, '\\') > -1 then
+        return self:renderJSON(nil, 'package_name must like:bitmap, do not contain any special char ', -1)
+    end
+
+    _package = _new_model('cw_package')
+
+    local member_id = self:currentMemberId()
+
+    local pro = _package:findFirstBy('name', package_name)
+
+    if is_valid(pro) and pro.member_id / member_id == 1 then
+        return self:renderJSON(nil, 'project_name[' .. package_name .. '] you already have,change another one', -1)
+    end
+
+    _package.member_id = member_id
+    _package.name = package_name
+    _package.remark = remark
+    _package.title = title
+    _package.platform = platform
+    _package.port = port
+    _package.git_source = git_source
+    _package.created_at = time()
+    _package:save()
+
+    return self:renderJSON(nil, 'ok')
+end
+
+return _extend(class_project, "controller.api.base")

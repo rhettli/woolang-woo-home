@@ -1,0 +1,13 @@
+{% local t=simple_form(mask_obj, {}) %}
+
+{% t.select('status',{  label='状态' } ) %}
+{% t.select('type',{  label='模型类型' } ) %}
+<!-- t.select('status',{  label='状态', collection = { [2] ="无效" , [1] ="有效" } } ) -->
+
+
+{% t.input('font',{  label='正面模型',type='file' } ) %}
+{% t.input('back',{  label='反面模型',type='file' } ) %}
+{% t.input('side_line',{  label='双耳模型' ,type='file'} ) %}
+
+{% t.submit('保存') %}
+{% t.render() %}

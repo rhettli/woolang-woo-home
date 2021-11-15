@@ -1,0 +1,11 @@
+local _M = { model_name = 'mask_pic_group' }
+
+function _M:_beforeSave(model)
+    if model.status == nil then
+        model.status = 1
+    end
+end
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

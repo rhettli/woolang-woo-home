@@ -1,0 +1,55 @@
+local _M = { model_name = 'mask_obj' }
+
+--- 在更新模型之前，如果有obj新模型上传，那么直接用新模型替换老模型
+function _M:_beforeUpdate(model)
+    print('_beforeUpdate:=============')
+
+    -- 获取上传的文件 正面模型
+    local font_path = _http_params('file:mask_obj[font]')
+    -- p={file='f1.png',size=12336,temp='/temp/t1***'}
+    if font_path then
+        print(_json_encode(font_path))
+        self:saveFile(model, font_path, 'font_path')
+    end
+
+    -- 获取上传的文件 反面模型
+    local back_path = _http_params('file:mask_obj[back]')
+    -- p={file='f1.png',size=12336,temp='/temp/t1***'}
+    if back_path then
+        print(_json_encode(back_path))
+        self:saveFile(model, back_path, 'back_path')
+    end
+
+    -- 获取上传的文件 双耳模型
+    local side_line_path = _http_params('file:mask_obj[side_line]')
+    -- p={file='f1.png',size=12336,temp='/temp/t1***'}
+    if side_line_path then
+        self:saveFile(model, side_line_path, 'side_line_path')
+    end
+end
+
+--- 把上传等模型保存到/public/static/obj目录下
+function _M:saveFile(model, temp, name)
+    print('side_line_path:==', _json_encode(side_line_path))
+
+    local folder = model['type'] .. '-' .. model.id
+
+    local dir = _DIR .. '/public/static/obj/'
+
+    if not _file_exist(dir .. folder) then
+        local status = _mkdir(dir .. folder)
+        print('fonder not exists:create stauts', status)
+    end
+
+    print(dir .. folder .. '/' .. name .. '.obj')
+
+    --{"name":"1631610802565.jpg","size":153054,"temp":"/var/folders/nq/g2km3wxx3s3b23fbfs746y7r0000gn/T//1631610802565.jpg153054"}
+
+    _mv(temp.temp, dir .. folder .. '/' .. name .. '.obj')
+
+    model[name] = folder .. '/' .. name .. '.obj'
+end
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

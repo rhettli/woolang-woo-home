@@ -1,0 +1,51 @@
+--- @class mask_pic_group
+local class_mask_pic_group = {
+    path_prefix = 'https://print.sumaophoto.net'
+}
+
+function class_mask_pic_group:new()
+    return self
+end
+
+---获取口罩模型地址
+function class_mask_pic_group:group_list()
+
+    local mask_pic_groups = __model.mask_pic_group:find({ conditions = 'status=:status:', bind = { status = 1 } })
+
+    local data = {}
+    for _, mask_pic_group in ipairs(mask_pic_groups) do
+        data[1 + #data] = {
+            Background = "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png",
+            ID = mask_pic_group .id,
+            Icon = "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png",
+            IconB = "https://t.irocks.cn/cherry_custom/imgs/manual/banner2.png",
+            Name = mask_pic_group .name, --"汪星人",
+            SubName = mask_pic_group .name
+        }
+
+        local ZoneResourceList = {}
+
+        local mask_pics = __model.mask_pic:find({ conditions = 'mask_pic_group_id=:mask_pic_group_id: and status=:status:',
+                                                  bind = { mask_pic_group_id = mask_pic_group .id, status = 1 } })
+
+        for _, mask_pic in ipairs(mask_pics) do
+            ZoneResourceList[1 + #ZoneResourceList] = {
+                Content = "",
+                CtrType = 11,
+                ID = mask_pic.id,
+                Image = self.path_prefix .. '/static/pic/' .. mask_pic.path,
+                ImageLg = "",
+                ImageSm = "",
+                ZoneID = mask_pic.id
+            }
+        end
+
+        data[#data]['ZoneResourceList'] = ZoneResourceList
+    end
+
+    return self:renderJSON(data, 'ok')
+end
+
+class_mask_pic_group = _extend(class_mask_pic_group, "controller/api/_base")
+
+return class_mask_pic_group.super[2](class_mask_pic_group)

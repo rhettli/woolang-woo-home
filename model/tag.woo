@@ -1,0 +1,19 @@
+local _M = {
+    _model = 'tag'
+}
+
+function _M:new()
+
+    return self
+end
+
+function _M:toJson()
+    return {
+        id = self.id,
+        title = self.title
+    }
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)
+

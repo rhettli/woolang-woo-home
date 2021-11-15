@@ -1,0 +1,77 @@
+return {
+    _mod = { zh = 'model操作工具类', en = 'model operator tools' },
+
+    --:task-begin:find--
+    _find = { zh = '根据字段查找member对象，如果没有字段，默认查找id,例：[woo murphy mod member find id: 100] 或 [woo murphy mod member find 100]',
+              en = 'find a member with id or other filed,default find with id,eg:[woo murphy mod member find id 100] or [woo murphy mod member find 100]' },
+    find = function(args, lan)
+
+        -- 如果使用命令 woo murphy find id 100
+        local filed = args[1]  -- filed=id
+        local value = args[2] -- value=100
+
+        if not _is_valid(filed) then
+            print(({ en = 'need key and value', zh = '缺少待查询的字段和值' })[lan])
+            return
+        end
+
+        if not _is_valid(value) then
+            value = filed
+            filed = 'id'
+            print(({ en = 'not get filed,will find id=' .. value, zh = '没有提供字段，查询id=' .. value })[lan])
+        else
+            print(({ en = 'find id=' .. value, zh = '查询id=' .. value })[lan])
+        end
+        -- 这里使用__model中的魔术方法可以取到member对象，进而查询
+        local member = __model.member:findFirstBy(filed, value)
+        _out('Member:', member:toJson())
+    end,
+
+    --:task-end:find--
+
+
+    --:task-begin:add--
+    _add = { zh = ('添加新员工，例：./murphy mod add member :name 小明 :age 26 email:123@qq.com nickname: oska%s'):format('\n\t添加的员工可以初始化所有字段，使用字段名加上冒号: 接 需要的值,如：name:小明'),
+             en = '' },
+    add = function(args, lan)
+        print('add new:===', _json_encode(args), lan)
+        --local capture = require('oshine/woo_args_capture', '1.?', 'capture'):new(args)
+
+
+    end,
+    --:task-end:add--
+
+    --:task-begin:del--
+    _del = { zh = '删除一个用户数据，行业内目前用户信息不能随便删除，最好使用禁用（forbidden）替代', en = 'delete a member,this is not a correct way to deal with your proj,use (forbidden instead) better' },
+    del = function(args, lan)
+
+    end,
+    --:task-end:del--
+
+    --:task-begin:update--
+    _update = { zh = '更新一个用户数据，如：woo murphy mod update member (id) :name 小红 :age 22', en = 'update a member,eg:woo murphy mod update member (id) :name oshine :age 22' },
+    update = function(args, lan)
+        print('update member:===', _json_encode(args), lan)
+        local findKey = args[2]
+        local leftArgs, model
+
+        if _str_index(findKey, ':') ~= -1 then
+            model = __model[args[1]]:findFirstBy(_str_replace(findKey, ':', ''), args[3])
+            leftArgs = table.slice(args, 3)
+        else
+            model = __model[args[1]]:findFirstBy('id', findKey)
+            leftArgs = table.slice(args, 2)
+        end
+
+        _out(leftArgs)
+
+        _out(args[1] .. ':', _json_encode(model), '\n')
+
+        --model[args[2]] = args[3]
+
+        model.password = '7cb14282a5cdf199ff2e90d4db534871'
+        model:update()
+    end
+    --:task-begin:update--
+
+}

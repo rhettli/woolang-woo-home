@@ -1,0 +1,18 @@
+local class_index = {}
+
+
+-- 启动默认首页地址
+function class_index:index()
+
+    self:view('index', ''):render('index.index.index')
+end
+
+-- 搜索
+function class_index:code()
+    self:single()
+    self:view('title', ''):render('index.index.code')
+end
+
+class_index = _extend(class_index, "controller/_base")
+
+return class_index.super[2](class_index)

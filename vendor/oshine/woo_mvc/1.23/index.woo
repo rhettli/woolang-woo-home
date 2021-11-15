@@ -1,0 +1,75 @@
+return function(pkgs)
+
+    local install_dir = (_env('WPM_PKG') or _home()) .. '/wpm/'
+
+    package.path = package.path .. ';@' .. install_dir .. '/?.woo;' .. _DIR .. '/?.woo;'
+
+    -- print('package.path1:===', package.path)
+
+    -- Todo 避免重复导入？
+    if not __load_core then
+        __load_core = true
+        require('oshine/woo_mvc@1.?:core')
+
+        if pkgs then
+            for _, v in pairs(pkgs) do
+                _import(v)
+            end
+        end
+    end
+
+    -- index.woo?_url=/foo/bar?op=123 这个是转换后的uri
+    -- /foo/bar?op=123                这个是正常的uri
+    local uri = _http_request('uri')
+    uri = uri .. '?'
+    -- _out("uri:", uri, "\r\n")
+    local controller = _sub_ex('n', uri, '?')  --  _str_split(params[2], "=")[2]
+    -- _out('ctrl:', _ltrim(controller), "\r\n")
+
+    --  定义全局变量,请求句柄
+    -- _request = _import('lib.request')
+    -- _request:new(params[3])
+
+    -- local func_arr = _str_split(controller, '/')
+
+    local file = ""
+    local method = ""
+
+    -- if _end_with(controller, '/') or controller == '' then
+
+    --  /foo/bar/ == /foo/bar.index
+    --  /foo/bar  == /foo.bar
+    file = _sub_ex('ne', controller, '/')
+    method = _sub_ex('r', controller, '/')
+    if file == '' then
+        file = '/index'
+    end
+    if method == '' then
+        method = 'index'
+    end
+
+    -- 这里使用 _require_controller ，防止缓存已经存在的包
+    local run_str = "local ctrl = _import('controller%s');return ctrl:%s();"
+
+
+    -- defined global var
+    _ACCESS_FILE = file
+    _ACCESS_METHOD = method
+
+    run_str = string.format(run_str, file, method)
+
+    -- _out('request in:==', file, method,run_str)
+
+     --print("\r\n", run_str, "\r\n")
+
+    local call, obj = loadstring(run_str)()
+    -- out(call)
+    pcall(call, ctrl, params)
+
+
+
+    -- out(http_request('host'), "\r\n")
+    -- out(http_request('path'), "\r\n")
+
+
+end

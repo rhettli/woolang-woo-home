@@ -1,0 +1,7 @@
+local _M = { model_name = 'login_his' }
+
+
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

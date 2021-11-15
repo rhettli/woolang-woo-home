@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>CSS Flyout menus</title>
+    <style>
+        #nav, #nav ul {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        #nav li {
+            float: left;
+            position: relative;
+            width: 10em;
+            border: 1px solid #B0C4DE;
+            background-color: #E7EDF5;
+            color: #2D486C;
+            font: 80% Verdana, Geneva, Arial, Helvetica, sans-serif;
+            margin-right: 1em;
+        }
+        #nav a:link, #nav a:visited {
+            display: block;
+            text-decoration: none;
+            padding-left: 1em;
+            color: #2D486C;
+        }
+        #nav ul {
+            display: none;
+            position: absolute;
+            padding-top: 0.5em;
+        }
+        #nav ul li {
+            float: none;
+            border: 0 none transparent;
+            border-bottom: 1px solid #E7EDF5;
+            background-color: #F1F5F9;
+            font-size: 100%;
+            margin: 0;
+            margin-bottom: 0.5em;
+            padding: 0;
+        }
+        #nav li:hover ul {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<ul id="nav">
+    <li><a href="#">Starters</a>
+        <ul>
+            <li><a href="#">Fish</a></li>
+            <li><a href="#">Fruit</a></li>
+            <li><a href="#">Soups</a></li>
+        </ul>
+    </li>
+    <li><a href="#">Main courses</a>
+        <ul>
+            <li><a href="#">Meat</a></li>
+            <li><a href="#">Fish</a></li>
+            <li><a href="#">Vegetarian</a></li>
+        </ul>
+    </li>
+    <li><a href="#">Desserts</a>
+        <ul>
+            <li><a href="#">Fruit</a></li>
+            <li><a href="#">Puddings</a></li>
+            <li><a href="#">Ice Creams</a></li>
+        </ul>
+    </li>
+</ul>
+</body>
+</html>

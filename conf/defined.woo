@@ -1,0 +1,74 @@
+-- here defined global function [这里定义全局函数]
+
+--- get ssdb0 handler,config it at conf/conf.lua [获取ssdb链接句柄,在conf/conf.lua中配置 ssdb0]
+__SSDB_CACHE0 = function()
+    return _import('oshine/woo_mvc@1.?:cache'):new('ssdb')
+end
+
+--- get redis0 handler [获取redis链接句柄]
+__REDIS_CACHE0 = function()
+    return _import('oshine/woo_mvc@1.?:cache'):new('redis')
+end
+
+--- get ssdb-0 handler [获取ssdb链接句柄,共数据存储使用]
+__DATA_CACHE0 = __SSDB_CACHE0
+
+--- table slice [table截取到右边给定位置]
+--- table_sub_to_right({1，2},2)={1}
+__TABLE_SUB_TO_RIGHT = function(t, r)
+    local res = {}
+    for i, v in pairs(t) do
+        if i <= r then
+            res[i] = v
+        end
+    end
+    return res
+end
+
+__STR_SUB_TO_LEFT = function(str, to)
+    return _str_sub(str, _str_rindex(str, to) + 1, #str)
+end
+
+-- 加密解密id，防止被爬虫爬取
+__PARSE_ID = function(id, isDecode)
+    local psw = ' .^%2@ fhy76169@)_+=<>/?t6' -- 发布前请修改此密码
+    local p = _id_parse(id, psw, isDecode)
+    if isDecode then
+        p = _sub_ex('re', p, ':')
+    end
+    return p
+end
+
+-- 获取多国语言
+function __TI8(lan, p, ...)
+    if not I8_LOGIN_OK then
+        _import('conf.i8')
+        return __TI8
+    end
+    if not lan then
+        return __TI8
+    end
+    if ... and #... > 0 then
+        return string.format(_import('conf.i8_' .. lan)[p], ...)
+    end
+    return _import('conf.i8_' .. lan)[p]
+end
+
+--- 比如使用member model:__model.member:findFirstById(1)
+---
+--- find a rows:member model:__model.member:find({conditions={id=1}})
+__model = setmetatable({}, {
+    __index = function(_, v)
+        return _new_model(v)
+    end
+})
+
+--- 比如使用queue/member:getTotal() 函数：__queue.member:getTotal(id,name,...)
+---@return oshine/woo_mvc@1.?:queue
+__queue = setmetatable({}, {
+    __index = function(_, v)
+        --print('__model:',v)
+        return require('oshine/woo_mvc@1?:queue')
+    end
+})
+

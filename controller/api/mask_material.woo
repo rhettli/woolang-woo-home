@@ -1,0 +1,16 @@
+local mask_material = {}
+
+function mask_material:index()
+    local res = [[
+{"code":0,"data":[{"ID":1,"Name":"\u63d0\u82b1\u592a\u7a7a\u5c42\u9762\u6599\uff08\u6709\u5b54\uff09","Size":"17cm x 15cm","Price":49,"Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/perforated_fabric.png","Desc":"\u900f\u6c14\u5438\u6e7f\u3001\u6291\u83cc\u9632\u5c18\uff0c\u633a\u9614\u6709\u578b","CreatedAt":"2021-03-18T11:29:27+08:00","UpdatedAt":"2021-03-18T11:29:27+08:00"},{"ID":2,"Name":"\u63d0\u82b1\u592a\u7a7a\u5c42\u9762\u6599\uff08\u6709\u5b54\uff09","Size":"18cm x 16.5cm","Price":49,"Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/perforated_fabric.png","Desc":"\u900f\u6c14\u5438\u6e7f\u3001\u6291\u83cc\u9632\u5c18\uff0c\u633a\u9614\u6709\u578b","CreatedAt":"2021-03-18T11:29:27+08:00","UpdatedAt":"2021-03-18T11:29:27+08:00"},{"ID":3,"Name":"\u63d0\u82b1\u592a\u7a7a\u5c42\u9762\u6599\uff08\u6709\u5b54\uff09","Size":"19cm x 18cm","Price":49,"Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/perforated_fabric.png","Desc":"\u900f\u6c14\u5438\u6e7f\u3001\u6291\u83cc\u9632\u5c18\uff0c\u633a\u9614\u6709\u578b","CreatedAt":"2021-03-18T11:29:27+08:00","UpdatedAt":"2021-03-18T11:29:27+08:00"},{"ID":4,"Name":"\u5b9e\u5fc3\u592a\u7a7a\u5c42\u9762\u6599\uff08\u65e0\u5b54\uff09","Size":"17cm x 15cm","Price":49,"Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/perforated_fabric.png","Desc":"\u67d4\u8f6f\u8212\u9002\uff0c\u4eb2\u80a4\u5e76\u4f34\u6709\u6e05\u65b0\u82b3\u9999\u6c14\u5473\uff0c\u63d0\u795e\u9192\u8111","CreatedAt":"2021-03-18T11:29:27+08:00","UpdatedAt":"2021-03-18T11:29:27+08:00"},{"ID":5,"Name":"\u5b9e\u5fc3\u592a\u7a7a\u5c42\u9762\u6599\uff08\u65e0\u5b54\uff09","Size":"18cm x 16.5cm","Price":49,"Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/perforated_fabric.png","Desc":"\u67d4\u8f6f\u8212\u9002\uff0c\u4eb2\u80a4\u5e76\u4f34\u6709\u6e05\u65b0\u82b3\u9999\u6c14\u5473\uff0c\u63d0\u795e\u9192\u8111","CreatedAt":"2021-03-18T11:29:27+08:00","UpdatedAt":"2021-03-18T11:29:27+08:00"},{"ID":6,"Name":"\u5b9e\u5fc3\u592a\u7a7a\u5c42\u9762\u6599\uff08\u65e0\u5b54\uff09","Size":"19cm x 18cm","Price":49,"Icon":"https:\/\/t.irocks.cn\/cherry_custom\/imgs\/manual\/perforated_fabric.png","Desc":"\u67d4\u8f6f\u8212\u9002\uff0c\u4eb2\u80a4\u5e76\u4f34\u6709\u6e05\u65b0\u82b3\u9999\u6c14\u5473\uff0c\u63d0\u795e\u9192\u8111","CreatedAt":"2021-03-18T11:29:27+08:00","UpdatedAt":"2021-03-18T11:29:27+08:00"}],"message":""}
+    ]]
+    _out(res)
+end
+
+function mask_material:new()
+    return self
+end
+
+mask_material = _extend(mask_material, "controller/api/_base")
+
+return mask_material.super[2](mask_material)

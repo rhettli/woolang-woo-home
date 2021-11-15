@@ -1,0 +1,124 @@
+-- 继承model
+
+local cls_order = {
+    _model = 'order',
+
+    -- alter table `order` modify status tinyint default 0 null comment '0订单发起，1已支付,2已发货，3已完成';
+
+    STATUS_TEXT = { [0] = '仅创建', [1] = '已支付', [2] = '已发货', [3] = '已完成' },
+
+    STYLE_TEXT = { [1] = '成年款式1', [2] = '成年款式2', [2] = '小孩款1', [2] = '小孩款2' },
+
+
+    app_id = 'wx5eb19e1204ee7c0f',
+    app_key = '1231dcf12e31112131321313213131z3',
+    mer_no = '1480491002'
+}
+
+function cls_order:newPay()
+    return require('oshine/wechat_xcx@1.?:pay'):new(self.app_id, self.app_key, self.mer_no)
+end
+
+function cls_order:payXcx(member, cancel_url, ip, root)
+
+    local opt = {
+        ['request_root'] = root,
+        ['ip'] = ip,
+        ['show_url'] = cancel_url,
+        ['cancel_url'] = cancel_url,
+        ['openid'] = member.xcx_openid,
+        ['product_name'] = self.product_name,
+        ['user_id'] = member.ali_user_id,
+        ['notify_url'] = root .. 'order/notify_xcx?id=' .. self.id
+    };
+
+    _log('==pay params ready:==', opt);
+
+    -- 返回支付sdk需要的相关信息
+    local pay_gateway = self:newPay()
+    local result,err = pay_gateway:buildForm(self, opt);
+
+    if err then
+        print(err)
+        return { '创建支付失败，请联系客服！' }, false;
+    end
+
+    _log('==pay gateway returned==', { ['user_id'] = member.id, ['opt'] = opt, ['res'] = result });
+
+    if (result) then
+        return { ['result'] = result, ['order_id'] = self.id, ['payment_no'] = self.payment_no }, true;
+    else
+        return { '创建支付失败，请联系客服！' }, false;
+    end
+end
+
+function cls_order:new()
+    return self
+end
+
+function cls_order:_beforeSave()
+    print('before save...')
+end
+
+function cls_order:_afterSave()
+
+    print('after save...')
+end
+
+--- 是否已经付款
+function cls_order:isPaid()
+    return tonumber(self.status) > 0
+end
+
+function cls_order:toJson()
+    return {
+        id = self.id,
+        cny_amount = self.cny_amount,
+        payment_no = self.payment_no,
+        created_at = self.created_at_time,
+        product_name = self.product_name,
+        status = self.status_text,
+    }
+end
+
+function cls_order:validResult(body)
+    print('validResult:==', body)
+
+    local pay_gateway = self:newPay()
+    local result = 'error'
+
+    -- 订单已经支付完成
+    if not self:isPaid() then
+        local pay_res = pay_gateway:validSign(body)
+
+        if pay_res then
+
+            local paid_amount = pay_res['total_fee'] and (pay_res['total_fee'] / 100) or 0
+
+            if (math.abs(paid_amount - self .cny_amount) > 0.01) then
+                _log('[NOTIFY PAYMENT] Weixin 实付金额与订单不符，支付失败', self .id, '实际支付金额：' .. paid_amount)
+            else
+
+                _log('[NOTIFY PAYMENT] Weixin ', self .id, '实际支付金额：' .. paid_amount);
+
+                if (_str_upper(pay_res['result_code']) == "SUCCESS") then
+                    self .status = 1
+                    self .trade_no = pay_res['transaction_id']
+                    self .paid_amount = self .cny_amount
+                    self .payed_at = _time()
+
+                    self:update()
+                    result = 'success'
+                end
+            end
+
+        else
+            _log("[NOTIFY] 支付验证通知失败");
+        end
+    end
+
+    return result;
+end
+
+cls_order = _extend(cls_order, 'oshine/woo_mvc@1.?:model')
+return cls_order.super[1](cls_order)

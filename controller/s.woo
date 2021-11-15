@@ -1,0 +1,64 @@
+local class_source = {}
+
+function class_source:new(o)
+    --o = o or {}
+
+    return self
+end
+
+-- 安装woo
+-- https://***/s/woo?v=latest
+function class_source:woo()
+
+end
+
+-- 安装om
+-- http://127.0.0.1:8008/s/om?ver=1.15
+function class_source:om()
+    local ver = _http_params('ver')
+    local real_ver = _str_sub(ver, 0, 1)
+    if real_ver then
+        local mod_ver = __model.version:findFirst({ conditions = 'is_woo=0 and real_ver=:real_ver: and ver>=:ver:',
+                                                    bind = { real_ver = real_ver, ver = ver },
+                                                    order = 'ver desc' })
+        mod_ver.i = 'https://gitee.com/oshine/om/raw/master/install.woo|https://github.com/rhettli/om'
+        return self:renderJSON(mod_ver:toJson())
+    end
+end
+
+function class_source:list()
+
+end
+
+function class_source:gip()
+    local got_string = false
+    local body = _http_body(got_string)
+    if _len(body) > 0 then
+        _del_at(body, 2, -1)
+    end
+    local gip_ = '101.33.125.167:1280;'
+    return self:renderJSON(gip_, e or 'err', -1)
+end
+
+--获取验证码数据
+function class_source:captcha()
+    local member_id, tp = _http_params('id', 'tp')
+    if not _is_valid(tp) then
+        return
+    end
+
+    local ip = _http_ip('ip')
+
+    local cap = require('oshine/woo_captcha@1.?:captcha'):new()
+    cap:create(160, 50)
+    cap:draw()
+
+    local f = __model.captcha:create(member_id, cap:code(), ip, tp)
+    --_out(cap:bytes())
+
+    local r = tostring(f.id) .. '#' .. _base64_encode(cap:bytes())
+
+    _out(r)
+end
+
+return _extend(class_source, "oshine/woo_mvc@1.?:controller")

@@ -1,0 +1,314 @@
+local cls_pay = { app_id = nil, app_key = nil, mer_no = nil }
+
+function cls_pay:new(app_id, app_key, mer_no)
+    self.  app_key = app_key
+    self.  app_id = app_id
+    self.  mer_no = mer_no
+    return self
+end
+
+function cls_pay:buildForm(payment, opts)
+    local request_root = opts.request_root
+    local notify_url = opts.notify_url
+
+    if (not notify_url) then
+        notify_url = request_root .. 'payments/notify/' .. payment .id
+        print('not set notify_url,default:', notify_url)
+    end
+
+    local str = _md5(_uuid()) .. _rand()
+    str = _str_sub(str, 0, 20)
+
+    print('payment.cny_amount:===', payment.cny_amount)
+
+    local out_trade_no = payment.payment_no or _md5(_time())
+    local body = {
+        ["appid"] = self. app_id,
+        ["mch_id"] = self .mer_no,
+        ["nonce_str"] = str,
+        ["body"] = opts['product_name'] or '口罩订单付款',
+        --// 太短不行
+        ["out_trade_no"] = out_trade_no,
+        ["total_fee"] = string.format("%.0f", payment.cny_amount * 100),
+        ["spbill_create_ip"] = opts['ip'],
+        ["notify_url"] = notify_url,
+        ["trade_type"] = "JSAPI",
+        ['openid'] = opts['openid']
+    }
+
+    body['sign'] = self:requestSign(body)
+
+    local xml = "<xml>\n"
+    for i, v in pairs(body) do
+        xml = xml .. ("<%s>%s</%s>\n"):format(i, v, i)
+    end
+
+    xml = xml .. "</xml>"
+
+    local url = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+    local response, ok = woo.http:new():body(xml):post(url)
+    --.sendsXml()
+    --.send();
+
+    print(xml)
+    print(response.body, ok)
+
+    --if (response .code ~= 200) then
+    --    info('payment', payment .id, "weixin_js_pay res code not 200.");
+    --    return null;
+    --end
+
+    local xmlPaser = require('oshine/baiye_xml@1.?:xml'):new()
+
+    local xmlObj = xmlPaser:ParseXmlText(response.body)
+    local dom = xmlObj.xml
+    if dom.return_code:value() == 'FAIL' then
+        return nil, dom.return_msg:value()
+    end
+
+    local prepay_id = _trim(dom.prepay_id:value())
+    print('payment', payment .id, 'weixin_js_pay:return_code=', dom.return_code:value(), ',return_msg=', dom .return_msg:value(), 'weixin_js_pay:prepay_id=', prepay_id)
+
+    local form = {
+        ['appId'] = self .app_id,
+        ['nonceStr'] = body['nonce_str'],
+        ['package'] = 'prepay_id=' .. prepay_id, --  预支付交易会话ID  必须  WX1217752501201407033233368018
+        ["timeStamp"] = tostring(_time()),
+        ['signType'] = 'MD5'
+    }
+
+    -- {"appId":"wxdd4524c00789d5de","nonceStr":"d8a1b58ecee6f7295010","package":"prepay_id=wx06080922668407c9630d495df6a7cc0000",
+    -- "timeStamp":"1633478962","signType":"MD5","paySign":"9A9C7FDF37592E0B110EA0DC334000EB"}
+
+
+    form['paySign'] = self:requestSign(form)
+
+    print('payment', payment .id, "weixin_js_pay:form=" .. _json_encode(form))
+    return form
+end
+
+--- 校验签名，通常是微信支付成功后回调
+---@return boolean|table
+function cls_pay:validSign(body)
+
+    if (not body) then
+        return false;
+    end
+
+    local opts = {}
+
+    local xmlPaser = require('oshine/baiye_xml@1.?:xml'):new()
+
+    local xmlObj = xmlPaser:ParseXmlText(body)
+    local childObj = xmlObj.xml:children()
+    local i = 1
+    while true do
+        local node = childObj[i]
+        if node == nil then
+            break
+        end
+        local name = node:name()
+        local val = node:value()
+        print(name, val)
+        opts[name] = _trim(val);
+        i = i + 1
+    end
+
+    _log("[NOTIFY] Weixin2 validSign dom_json : " .. _json_encode(opts))
+
+    if (opts['sign'] == self:requestSign(opts)) then
+        _log("[NOTIFY] Weixin2 validSign ok: " .. opts['sign'])
+        return opts
+    else
+        _log("[NOTIFY] Weixin2 validSign error: " .. opts['sign'])
+        return false
+    end
+
+end
+
+--- 参数签名校验
+function cls_pay:requestSign(opts)
+
+    _log("[NOTIFY] WEIXIN APP KEY:" .. self .app_key)
+    local source = { }
+
+    for i, v in pairs(opts) do
+        source[#source + 1] = ("%s=%s"):format(i, v)
+    end
+
+    table.sort(source)
+
+    source[#source + 1] = ("key=%s"):format(self .app_key)
+
+    local pay_sign = _md5(_join(source, '&'))
+
+    return _str_upper(pay_sign)
+end
+
+function cls_pay:checkPayment(payment)
+
+    url = "https://api.mch.weixin.qq.com/pay/orderquery"
+
+    nonce_str = randStr(10)
+    opts = array()
+    opts['nonce_str'] = nonce_str
+    opts['mch_id'] = this .mer_no
+    opts['appid'] = this .app_id
+    out_trade_no = payment .id . substr(md5(payment .id), 0, 10)
+    opts['out_trade_no'] = out_trade_no
+    sign = this .requestSign(opts)
+    body = [[
+<xml>
+<appid>{ this .app_id}</appid>
+<mch_id>{ this .mer_no}</mch_id>
+<nonce_str>{ nonce_str}</nonce_str>
+<out_trade_no>{ out_trade_no}</out_trade_no>
+<sign>{ sign}</sign>
+</xml>
+]]
+
+    --response = \Httpful\Request::post( url)
+    --.body( body)
+    --.sendsXml()
+    --.send();
+
+    if (response .code ~= 200) then
+        return nil;
+    end
+
+    handler = '' -- new \Httpful\Handlers\XmlHandler(array('libxml_opts' = LIBXML_NOCDATA));
+    xml_doc = handler .parse(response .body);
+
+    --//  xml_doc = simplexml_load_string( response .body, 'SimpleXMLElement', LIBXML_NOCDATA);
+
+    trade_state = xml_doc .trade_state;
+    if (trade_state and "SUCCESS" == trade_state) then
+        trace("######weixin2 checkPayment trade_state SUCCESS");
+        payment .pay_status = PAYMENT_PAY_STATUS_SUCCESS;
+        payment .update();
+    end
+end
+
+--# 支付完成给支付平台返回的信息，每家都不一样
+function cls_pay:success()
+
+    _out("SUCCESS");
+end
+
+function cls_pay:arrayToXml(arr)
+
+    xml = "<xml>";
+    --foreach ( arr as  key =  val) {
+    --if (is_numeric( val)) {
+    -- xml .= "<" .  key . ">" .  val . "</" .  key . ">";
+    --} else {
+    -- xml .= "<" .  key . "><not [CDATA[" .  val . "]]></" .  key . ">";
+    --}
+    --}
+    xml = xml .. "</xml>";
+
+    return xml;
+end
+
+--function refund( payment,  opts)
+--{
+-- refund_amount = fetch( opts, 'refund_amount', 0);
+-- out_refund_no = fetch( opts, 'refund_no', '');
+--
+-- out_trade_no =  payment .payment_no;
+-- body = array(
+--["appid"]=  this .app_id,
+--["mch_id"]=  this .mer_no,
+--["nonce_str"]= randStr(20),
+--["out_trade_no"]=  out_trade_no,
+--["out_refund_no"]=  out_refund_no,
+--["total_fee"]= intval(strval( payment .cny_amount * 100)),
+--["refund_fee"]= intval( refund_amount * 100),
+--["op_user_id"]=  this .mer_no,
+--["refund_account"]= 'REFUND_SOURCE_UNSETTLED_FUNDS',
+--'sign_type' = 'MD5'
+--);
+--
+--//REFUND_SOURCE_UNSETTLED_FUNDS---未结算资金退款（默认使用未结算资金退款）
+--//REFUND_SOURCE_RECHARGE_FUNDS---可用余额退款(限非当日交易订单的退款）
+--
+--info( payment .id,  body);
+--
+-- body['sign'] =  this .requestSign( body);
+--
+-- xml = "<xml>\n";
+--foreach ( body as  key =  value) {
+-- xml .= "<{ key}>{ value}</{ key}>\n";
+--}
+-- xml .= "</xml>";
+--
+-- pem_cert_path = APP_ROOT . "temp/api_cert_{ this .payment_channel .mer_no}.pem";
+-- pem_key_path = APP_ROOT . "temp/api_key_{ this .payment_channel .mer_no}.pem";
+--if (not file_exists( pem_cert_path)) {
+-- api_cert_url =  this .payment_channel .api_cert_url;
+--httpSave( api_cert_url,  pem_cert_path);
+--}
+--if (not file_exists( pem_key_path)) {
+-- api_key_url =  this .payment_channel .api_key_url;
+--httpSave( api_key_url,  pem_key_path);
+--}
+--
+-- url = 'https://api.mch.weixin.qq.com/secapi/pay/refund';
+-- response =  this .postCurl( url,  xml,  pem_cert_path,  pem_key_path);
+--
+-- previous_value = libxml_disable_entity_loader(true);
+-- array_data = json_decode(json_encode(simplexml_load_string( response, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+--libxml_disable_entity_loader( previous_value);
+--
+--info( payment .id, 'res',  array_data);
+--
+--//         result_code = fetch( array_data, 'result_code'); // SUCCESS/FAIL
+--//         refund_id = fetch( array_data, 'refund_id'); //微信退款单号
+--//         refund_fee = fetch( array_data, 'refund_fee'); // 退款金额
+--//         error_reason = fetch( array_data, 'err_code_des');
+--
+--return  array_data;
+--}
+
+--function postCurl( url,  xml,  pem_cert_path = null,  pem_key_path = null)
+--{
+--//初始化curl
+-- ch = curl_init();
+--//设置超时
+--curl_setopt( ch, CURLOPT_TIMEOUT, 15);
+--curl_setopt( ch, CURLOPT_URL,  url);
+--curl_setopt( ch, CURLOPT_SSL_VERIFYPEER, TRUE);
+--curl_setopt( ch, CURLOPT_SSL_VERIFYHOST, 2);//严格校验
+--//设置header
+--curl_setopt( ch, CURLOPT_HEADER, FALSE);
+--//要求结果为字符串且输出到屏幕上
+--curl_setopt( ch, CURLOPT_RETURNTRANSFER, TRUE);
+--
+--//设置证书
+--if ( pem_cert_path) {
+--//使用证书：cert 与 key 分别属于两个.pem文件
+--curl_setopt( ch, CURLOPT_SSLCERTTYPE, 'PEM');
+--curl_setopt( ch, CURLOPT_SSLCERT,  pem_cert_path);
+--curl_setopt( ch, CURLOPT_SSLKEYTYPE, 'PEM');
+--curl_setopt( ch, CURLOPT_SSLKEY,  pem_key_path);
+--}
+--
+--//post提交方式
+--curl_setopt( ch, CURLOPT_POST, TRUE);
+--curl_setopt( ch, CURLOPT_POSTFIELDS,  xml);
+--
+-- data = curl_exec( ch);
+--
+--//返回结果
+--if ( data) {
+--curl_close( ch);
+--return  data;
+--} else {
+-- error = curl_errno( ch);
+--warn("curl出错，错误码: error" . " URL: " .  url);
+--curl_close( ch);
+--return false;
+--}
+--}
+
+return cls_pay

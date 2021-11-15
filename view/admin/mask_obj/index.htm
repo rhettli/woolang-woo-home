@@ -1,0 +1,40 @@
+
+<form action="/admin/mask_obj/index" method="get" class="search_form" autocomplete="off" id="search_form">
+    <label for="id_eq">Id</label>
+    <input name="device[id_eq]" type="text" id="id_eq"/>
+
+    <label for="device_no">ver</label>
+    <input name="device[device_no_eq]" type="text" id="device_no"/>
+
+    <button type="submit" class="ui button">搜索</button>
+ </form>
+
+<div style="margin-top: 18px;">
+   <a href="/admin/mask_obj/edit" class="modal_action" style="
+    background-color: #e2e2e2;
+    color: #797979;
+    border: 1px solid #828282;
+    font-size: 1.58rem;
+    padding: 0.3rem 1rem;
+    border-radius: 1rem;
+">新增</a>
+
+    </div>
+
+{% macro edit(op) %}
+<a href="/admin/mask_obj/edit?id={{op.id}}" class='modal_action'>编辑</a>
+{% /macro %}
+
+{% macro path_(op) %}
+正面地址 <a target=_blank href="/static/obj/{{op.font_path}}">{{op.font_path}}</a> <br/>
+反面地址 <a target=_blank href="/static/obj/{{op.back_path}}">{{op.back_path}}</a> <br/>
+耳朵地址 <a target=_blank href="/static/obj/{{op.side_line_path}}">{{op.side_line_path}}</a> <br/>
+{% /macro %}
+
+
+
+{% simple_table(mask_objs, {id='ID', path_='正面地址',
+type_text='模型类型' ,status_text='模型状态' , created_at_time='创建时间' , edit='操作' }) %}
+
+
+

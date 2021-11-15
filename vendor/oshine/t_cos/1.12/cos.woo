@@ -1,0 +1,30 @@
+local cls = { _host = 'sts.tencentcloudapi.com' }
+
+function cls:new(appid, buckey, region, secId, secKey)
+    self.appid = appid
+    self.buckey = buckey
+    self.region = region
+    self.secId = secId
+    self.secKey = secKey
+    return self
+end
+
+function cls:sign()
+
+end
+
+function cls:get(method)
+
+end
+
+function cls:get(method)
+
+end
+
+return cls
+
+
+
+
+
+

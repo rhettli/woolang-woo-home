@@ -1,0 +1,62 @@
+local cls_photo = {}
+
+-- 文章帖子详情页面
+function cls_photo:upload()
+
+    -- 获取上传的图片
+    local file = _http_params('file:file')
+    print(_json_encode(file))
+
+    local member_id = self:currentMemberId()
+
+    local md5 = _md5(file.temp)
+    print(member_id, md5)
+
+    if md5 then
+        -- 如果之前这个用户曾经上传过这个照片，直接返回结果
+        -- todo 是否启用全局不仅仅只是当前用户，来节省空间
+        local old = __model.photo:findFirst({ conditions = 'md5=:md5: and member_id=:member_id:', bind = { md5 = md5, member_id = member_id } })
+        if old and old.member_id == member_id then
+            return self:renderJSON(old:toJson(), 'ok')
+        end
+    end
+
+    -- 没有找到，则保存新的图片到数据库中
+    local _type = _http_header('_type')
+
+    print('_type:' .. _type)
+
+    local photo = __model.photo:add({ name = file.name, type = _type })
+
+    local folder = member_id
+
+    local dir = _DIR .. '/public/static/upload/'
+
+    if not _file_exist(dir .. folder) then
+        local status = _mkdir(dir .. folder)
+        print('fonder not exists:create status', status)
+    end
+
+    local name = _md5(file.name)
+
+    --{"name":"1631610802565.jpg","size":153054,"temp":"/var/folders/nq/g2km3wxx3s3b23fbfs746y7r0000gn/T//1631610802565.jpg153054"}
+
+    local path = folder .. '/' .. name .. '.' .. _sub_ex('r', file.name, '.')
+    local source = dir .. path
+
+    print(source)
+
+    _mv(file.temp, source)
+
+    photo.path = path
+    photo.md5 = md5
+    photo.size = file.size
+    photo.member_id = member_id
+    photo:update()
+
+    return self:renderJSON(photo:toJson(), 'ok')
+end
+
+cls_photo = _extend(cls_photo, "controller/_base")
+
+return cls_photo.super[2](cls_photo)

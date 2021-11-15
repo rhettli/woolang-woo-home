@@ -1,0 +1,34 @@
+return {
+    _runtime = { zh = '运行时工具类，可以清除缓存系统运行的缓存，和查看缓存列表', en = 'can clear all sys cache or list all cache' },
+    help = function(p, lan)
+
+    end,
+    _clear = { zh = '清除所有metadata(table)缓存,在更新数据库表结构时执行', en = 'clear all cache of metadata(table),exec after update table struct' },
+    clear = function(p, lan)
+        -- todo delete file with p[1]
+        _ls(_DIR .. '/runtime', function(f)
+            if f.name == 'runtime' then
+                return
+            end
+
+            _rm(f.path)
+        end)
+        print('Done')
+    end,
+    _list = { zh = '查看所有metadata文件', en = 'list all metadata file' },
+    list = function(p, lan)
+        local dir = p[1] and '/' .. p[1] or ''
+        _ls(_DIR .. '/runtime' .. dir, function(f)
+            if f.name == 'runtime' then
+                return
+            end
+            if f.isDir then
+                print(_sub_ex('re', _str_replace(f.path, '\\', '/'), '/') .. '', '\t')
+            else
+                print('\t', f.name)
+            end
+
+        end)
+        print('\nYou can clear runtime file: woo murphy runtime clear ')
+    end
+}

@@ -1,0 +1,82 @@
+local class_member = {}
+
+-- 用户家页面渲染
+function class_member:home()
+    -- 如果没有传来id，那么默认查看自己的主页
+    local id = _http_params('id')
+    if not id then
+        id = self:currentMemberId()
+    end
+
+    self:view('member_id', id):render('index.member.home')
+end
+
+-- 异步获取关注者
+function class_member:ajaxFollower()
+    -- 只能ajax访问
+
+
+end
+
+-- 异步获取我关注的人
+function class_member:ajaxFollow()
+    -- 只能ajax访问
+
+
+end
+
+-- 异步获取用户信息
+function class_member:ajaxInfo()
+    -- 只能ajax访问
+    local id = _http_params('id')
+    if not id then
+        return
+    end
+
+    local member = __model.member:findFirstById(id)
+    print((member))
+    if member then
+        return self:renderJSON(member:toJson())
+    end
+    return self:renderJSON(nil, 'not find member', -1)
+end
+
+-- api登陆
+function class_member:ajaxLogin()
+    -- 只能ajax访问
+
+    -- 获取用户名密码
+    local user, psw = _http_params('username', 'password')
+
+    print(user, psw)
+
+    if not user or not psw then
+        return self:renderJSON(nil, '用户名密码不能为空', -1)
+    end
+
+    psw = _md5(psw .. ' . ')
+
+    local member
+    if _str_index(user, '@') ~= -1 then
+        -- 邮箱登陆
+        member = __model.member:findFirstBy('email', user)
+    elseif #user == 11 and _begin_with(user, '1') then
+        -- 11 位以1开头的手机号码
+        member = __model.member:findFirstBy('mobile', user)
+    else
+        -- 用户名登陆，用户名第一位不能为1
+        member = __model.member:findFirstBy('username', user)
+    end
+
+    if member and psw == member.password then
+        member:newSid()
+        member:update()
+
+        return self:renderJSON(member:toJson())
+    end
+    return self:renderJSON(nil, '登陆失败', -1)
+end
+
+class_member = _extend(class_member, "controller/_base")
+
+return class_member.super[2](class_member)

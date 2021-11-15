@@ -1,0 +1,21 @@
+-- 例子
+
+
+local cls = require('tk')
+
+local cos = cls:new(
+        "1255502609",
+        "nj-dt-1255502609",
+        "ap-nanjing",
+        "AKIDoTs0sTothEVWGjxvc2B4h4A2dx0nJYWE",
+        "TgcGfmcCVYFgqkNjodCUVGkxtYx5wWqt")
+
+local r, e = cos:token({ 'get', 'put', 'post' }, 3600, '/')
+
+print('error:===', e)
+
+_out('result:===\n\n', r.body)
+
+
+
+

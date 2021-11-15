@@ -1,0 +1,17 @@
+return {
+    _start = { zh = '启动队列服务', en = 'start queue server' },
+    start = function(p, lan)
+        local queue = require('oshine/woo_mvc@1?:queue')
+        queue.start()
+    end,
+    _stop = { zh = '停止队列服务', en = 'stop queue server' },
+    stop = function(p, lan)
+        local queue = require('oshine/woo_mvc@1?:queue')
+        queue.stop()
+    end,
+    _reload = { zh = '重启队列服务', en = 'restart queue server' },
+    reload = function(p, lan)
+        local queue = require('oshine/woo_mvc@1?:queue')
+        queue.reload()
+    end
+}

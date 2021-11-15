@@ -1,0 +1,40 @@
+local _M = {
+    _model = 'comment_talk'
+}
+
+function _M:new()
+
+    self.STATUS_TEXT = { [0] = '待审核', [1] = '正常' }
+
+    return self
+end
+
+function _M:withJsonIsThank(member_id)
+    -- 如果没登陆，则member_id为空
+    if not member_id then
+        self:jsonAdd('is_thank', false)
+    else
+        local old = __model.comment_talk_like:findFirst({ conditions = 'comment_talk_id =:comment_talk_id: and member_id =:member_id:',
+                                                          bind = { comment_talk_id = self.id, member_id = member_id } })
+        print(member_id, self.id, self.member_id)
+        self:jsonAdd('is_thank', old and true or false)
+    end
+
+    return self
+end
+
+function _M:withJsonMember(talk_id, member_id)
+    self:jsonAdd('member', { nickname = self.member.nickname, id = self.member.id, avatar = self.member:getAvatar() })
+    return self
+end
+
+function _M:beforeToJson(json)
+    json.id = self.id
+    json.content = self.content
+    json.thank_num = self.thank_num
+
+end
+
+_M = _extend(_M, 'oshine/woo_mvc@1.?:model')
+return _M.super[1](_M)
+

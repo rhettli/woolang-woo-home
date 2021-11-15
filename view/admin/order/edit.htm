@@ -1,0 +1,11 @@
+{% local t=simple_form(order, {}) %}
+
+{% t.input('addr_name',{  label='收件人' } ) %}
+{% t.input('addr_phone',{  label='电话' } ) %}
+{% t.input('addr_addr',{  label='地址' } ) %}
+
+{% t.select('status',{  label='状态' } ) %}
+<!-- t.select('status',{  label='状态', collection = { [2] ="无效" , [1] ="有效" } } ) -->
+
+{% t.submit('保存') %}
+{% t.render() %}

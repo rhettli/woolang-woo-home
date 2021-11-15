@@ -1,0 +1,81 @@
+return {
+    _sql = { zh = 'sql增量文件管理模块', en = 'sql increase file manager' },
+
+    _init = { zh = '初始化sql到数据库', en = 'init database' },
+    init = function(p, lan)
+
+    end,
+    _add = { zh = '创建一条sql更新文件,如：./murphy sql add change_user_name_to_udt8 "修改用户名字段编码到utf8"',
+             en = 'create a sql file for update,eg:./murphy sql add change_user_name_to_udt8 "change use\'s encode to utf8"' },
+    add = function(p, lan)
+        if not p[1] then
+            print("need sql file name,eg:woo murphy sql add create_member_table_v1  \"this is remark\"")
+            return
+        end
+        local sqlFile = _DIR .. '/db/' .. _date('YmdHis') .. '-' .. p[1] .. ".sql"
+        local remark
+        if lan == 'zh' then
+            remark = [[-- 这里是sql注释
+-- sql结尾以 -- DONE 表示此sql已经执行完毕
+-- 本文件使用：woo murphy sql add ]]
+        else
+            remark = [[-- 这里是sql注释
+-- sql结尾以 -- DONE 表示此sql已经执行完毕
+-- 本文件使用：woo murphy sql add ]]
+        end
+        remark = remark .. p[1] .. ' 生成\n\n\n'
+
+        _file_save(sqlFile, remark)
+
+        print("create sql file:" .. sqlFile .. ' done')
+    end,
+    _update = { zh = '执行所有未曾执行的sql增量文件,新增文件:./murphy sql add update_member_name,修改完成后，执行:./murphy sql update detail',
+                en = 'exec all sql file which not has been executed.' },
+    update = function(param, lan)
+        _out(param)
+
+        local _sql_handler = require('oshine/woo_mvc@1.?:db'):new()
+        local woo_sql = require('oshine/woo_sql@1.?:sql')
+
+        _ls(_DIR .. '/db', function(f, is_folder)
+            if not _end_with(f.name, '.sql') then
+                if param[1] == 'detail' then
+                    print('sql文件已执行，跳过', f.name)
+                end
+                return
+            end
+            print('开始执行sql文件', f.name)
+
+            local content = _cat(_DIR .. '/db/' .. f.name, true)
+            woo_sql = woo_sql:new(content):parse()
+
+            --_sql_handler:exec('BEGIN;')
+            while true do
+                local line_sql = woo_sql:nextLine(true)
+                print(line_sql)
+                if line_sql then
+                    local r, e = _sql_handler:exec(line_sql)
+                    if e then
+                        print('exec err:==', line_sql, e)
+                        return
+                    end
+                    woo_sql:done() -- 把已经执行完毕的标记下
+                else
+                    break
+                end
+            end
+
+            -- 执行完毕保存执行结果
+            _file_save(_DIR .. '/db/' .. f.name, woo_sql:toSql())
+
+            local name = _sub_ex('ne', f.name, '.')
+
+            _mv(_DIR .. '/db/' .. f.name, _DIR .. '/db/' .. name .. '.SQL')
+
+        end)
+        if _sql_handler then
+            _sql_handler:close()
+        end
+    end,
+
+}

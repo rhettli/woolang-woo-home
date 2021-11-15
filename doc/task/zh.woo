@@ -1,0 +1,16 @@
+return {
+    print = function(k)
+        local filter = {}
+        filter.cli = [[
+启动一个控制台，然后在控制台中运行woo脚本
+例如:<fg=11aa23>woo murphy cli</> 来启动控制台
+然后你可以输入运行下方脚本:
+<cyan>__model.member:findFirstById(100).nickname</>   -- 查询id为100的用户，输出其昵称
+<cyan>:local member = __model.member:findFirstById(100) ;print(member.nickname, member.mobile)</>  -- 查询id为100的用户，输出其昵称和手机号
+
+    ]]
+
+        _color('diy', filter[k])
+
+    end
+}

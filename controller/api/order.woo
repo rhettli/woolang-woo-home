@@ -1,0 +1,134 @@
+local cls_order = {}
+
+function cls_order:new()
+    return self
+end
+
+cls_order.PAY_XCX = 1 -- 微信付款方式
+
+-- 订单付款
+function cls_order:pay()
+
+    local order_id = _http_params('order_id');
+    local pay_type = tonumber(_http_params('pay_type') or 1);
+
+    print('cls_order:pay:==', order_id, pay_type)
+
+    if not order_id then
+        return self:renderJSON(nil, 'err', -1)
+    end
+
+    local order = __model.order:findFirstById(order_id)
+
+    print(order.member_id, self:currentMemberId())
+
+    if (not order or order.member_id ~= self:currentMemberId()) then
+        return self:renderJSON(nil, '订单错误！')
+    end
+
+    if (order.created_at and tonumber(order.created_at) > _time() - 5) then
+        return self:renderJSON(nil, '请勿重复频繁，请重试');
+    end
+
+    --if (not order:isWaitPay()) then
+    --    info('==order already finished==', photo_order_id, this.currentUserId());
+    --    return self:renderJSON(nil, '您已经支付过了!');
+    --end
+
+    if (pay_type == self.PAY_XCX) then
+
+        local r = order:payXcx(self:currentMember(), _http_header('Referer'), _http_ip(), 'https://print.sumaophoto.net/api/')
+        return self:renderJSON(r, 'ok')
+    end
+end
+
+-- 小程序订单付款后微信异步通知接口
+function cls_order:notify_xcx()
+    -- 获取raw body 数据
+    local body = _strs(_http_params())
+    _log('notify body:==', body)
+
+    local id = _http_params('id')
+
+    if id then
+        local order = __model.order:findFirstById(id)
+        if order then
+            order:validResult(body)
+        end
+
+    end
+
+end
+
+-- 小程序订单列表
+function cls_order:list()
+    -- 查找所有的订单记录
+    local orders = __model.order:find({ conditions = 'member_id=' .. self:currentMemberId(), order = 'created_at desc' })
+    local data = {}
+
+    --print(#orders)
+    for _, order in ipairs(orders) do
+        data[#data + 1] = order:toJson()
+    end
+
+    return self:renderJSON(data, nil)
+
+end
+
+-- 创建新到订单
+function cls_order:create()
+
+    local addr_name, addr_phone, addr_addr = _http_params('addr_name', 'addr_phone', 'addr_addr')
+
+    local size = _http_params('size') or 17
+    local number = _http_params('number') or 1
+
+    local remark = _http_params('remark')
+
+    local style = _http_params('style') * 1 -- 款式 1 成年款式1，2 成年款式2，3 小孩款1，4 小孩款2
+
+    -- 处理下金额到问题
+    local cny_amount = ({ 2.24, 2.35, 2.21, 2.12 })[style]
+    if not cny_amount then
+        return self:renderJSON('error', nil, -1)
+    end
+
+    cny_amount = cny_amount * number
+
+    local order = __model.order:new()
+    order.cny_amount = cny_amount -- 金额
+
+
+    order.addr_name = addr_name -- 收件人姓名
+    order.addr_addr = addr_addr -- 收件人地址
+    order.addr_phone = addr_phone   -- 收件人电话
+
+    order.code = code
+    order.number = number       -- 口罩数量
+    order.size = size           -- 口罩尺寸
+    order.remark = remark       -- 口罩备注
+    order.style = style         -- 口罩style
+
+    order.buy_time = _time()
+
+    order.buy_time = _time()
+
+    order.member_id = self:currentMemberId()
+
+    order:save()
+
+    order.product_name = '定制口罩付款订单-' .. order.id
+    -- 生成付款订单号
+
+    print(order.id, order.member_id)
+    order.payment_no = _md5(order.id .. order.member_id)
+    order:update()
+    print(order.payment_no)
+
+    return self:renderJSON({ order = order:toJson() }, 'ok')
+end
+
+cls_order = _extend(cls_order, "controller/api/_base")
+
+return cls_order.super[2](cls_order)
+

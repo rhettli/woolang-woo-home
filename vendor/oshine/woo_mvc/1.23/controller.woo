@@ -1,0 +1,20 @@
+local _M = { _c = '' }
+
+function _M:new()
+    return self
+end
+
+function _M:model(name)
+    return _new_model(name)
+end
+
+function _M:renderJSON(arr, msg, code)
+    --print(arr, msg, code)
+
+    arr = arr or {}
+    _http_header('Content-Type', 'application/json')
+    _out({ msg = msg or arr.msg or '', data = arr.data or arr, code = code or arr.code or 0 })
+
+end
+
+return _M

@@ -1,0 +1,29 @@
+local _M = {}
+
+function _M:new(o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    self.version = "1"
+    return o
+end
+
+function _M:edit()
+    local v = _import('lib.view'):new()
+    v.view['operator'] = { content = "标题测试", name = '姓名测试', status = 1 }
+
+    v:render("admin.index.edit")
+end
+
+function _M:index()
+    local v = _import('lib.view'):new()
+    v.view['operators'] = { { name = 'hello', id = 1, content = "标题测试", name = '姓名测试', status = 1 },
+                            { name = 'haha', id = 2, content = "标题测试", name = '姓名测试', status = 1 } }
+
+    v:render("admin.index.index")
+
+end
+
+_M = _extend(_M, "controller/admin/_base")
+
+return _M.super[2](_M)

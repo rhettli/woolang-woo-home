@@ -1,0 +1,422 @@
+local class_member = {}
+
+function class_member:new(o)
+    o = o or {}
+    return self
+end
+
+-- default time 30min
+function class_member:createShortPsw()
+    local psw = _http_params('psw')
+    local sp = _http_params('sp')
+    local sp_expire_at = _http_params('sp_expire_at')
+    if _is_valid(sp_expire_at) then
+        sp_expire_at = _time() + sp_expire_at * 60
+    else
+        sp_expire_at = _time() + 30 * 60
+    end
+
+    local member = self:currentMember()
+    if member.password ~= psw then
+        return self:renderJSON(nil, 'login password error', -1)
+    end
+    member.sp = sp
+    member.sp_expire_at = sp_expire_at
+    member:save()
+    return self:renderJSON(nil, '')
+
+end
+
+function class_member:logout()
+    local member = self:currentMember()
+
+    member:logout()
+
+    return self:renderJSON(nil, 'ok')
+end
+
+--- 刷新sid,只需要把sid过期时间延长即可，todo 限制频繁刷新
+---
+--- base:checkAuth() 已经鉴权sid是否有效，这里不需要鉴权
+function class_member:refreshSid()
+
+    local sid = _http_params('sid')
+
+    _log('用户刷新sid', sid)
+
+    member.sid = sid
+
+    -- 刷新sid
+    member:saveRds(true)
+
+    return self:renderJSON({ sid = member.sid })
+end
+
+function class_member:login()
+    -- 多设备登陆
+
+    local email = _http_params('email')
+    local psw = _http_params('psw')
+
+    local device_no = _http_params('device_no')
+    local platform = _http_params('platform')
+
+    print('before login:===', email, psw, platform, device_no)
+
+    --if platform and not in_array(platform, { 'windows', 'drawin', 'linux','web-chrome' ,'web-chrome' }) then
+    --    return self:renderJSON(nil, 'login fail:[0p]', -1)
+    --end
+
+    _log('login before:', email, psw, platform, device_no)
+
+    if not _is_valid(device_no) or #device_no < 8 then
+        device_no = nil
+    end
+
+    if not _is_valid(email, psw) then
+        return self:renderJSON(nil, __TI8()('en', I8_LOGIN_FAIL), -1)
+    end
+
+    local mod = _new_model('member')
+
+    local member = mod:findFirstBy('email', email)
+    if not member or member.password ~= _md5(psw) then
+        return self:renderJSON(nil, __TI8()('en', I8_LOGIN_FAIL), -1)
+    end
+
+    member.last_at = _time()
+
+    -- get current member id
+    --local member_id = self:currentMemberId()
+    local member_id = member.id
+
+    member:generateSid()
+
+    local json = member:toJson()
+    local sid = member.sid
+
+    -- 开启事务：begin
+    member:begin(function(sql_handler)
+        --first exec begin sql,and when function end ,will auto exec commit sql
+        local device_id
+        if device_no then
+            local _Device = _new_model('device'):with(sql_handler)
+
+            local device = _Device:findFirstBy('device_no', device_no)
+            if _is_valid(device) then
+                -- update last login time [更新这个设备的最后登录时间]
+                device.last_at = _time()
+                device.member_id = member_id
+                device.sid = sid
+                -- a platform can not be change after record to DB
+                if device.platform ~= platform then
+                    return self:renderJSON(nil, 'fail[03]', -1)
+                end
+                device:save()
+
+                device_id = device.id
+                -- update member's device_id
+                member.device_id = device.id
+            else
+                _Device.sid = sid
+                _Device.platform = platform
+                _Device.device_no = device_no
+                _Device.created_at = _time()
+                _Device.member_id = member_id
+                _Device.last_at = _time()
+                _Device.ip = _http_ip()
+                _Device.status = 1
+                _Device:with(sql_handler):save()
+
+                device_id = _Device.id
+                -- update member's device_id
+                member.device_id = _Device.id
+            end
+        end
+
+        -- member发起事务，不需要调用with()方法
+        member:save()
+
+        -- 保存sid到redis缓存
+        member:saveRds()
+
+        -- 返回真，执行事务
+        return true
+    end)
+
+    json.sid = sid
+    return self:renderJSON(json)
+end
+
+--/**
+--*  https://wxcx.fddchina.com/xcx/users/xcx_binding  Completed 0.308s dispatcher xcx/users#xcx_binding
+--* Parameters: {"encryptedData":"WKLZfvg%2FuC7boid7QYPlRnpERyxTqKqeKE3q%2FifY9YNetQbcgMRFLhZDRZX3jJGZl0vJOlw78Jmt3r9CBi5PSsxDpPoYgj0NFNigwwXqP5GtLyrhTiwWk%2Fc%2B%2Brfk%2BoaQ96MDu90FcEasNCOvPEw41JIQ5Z94YCYMQgOYEbvobxxr6WVeDSrIb2ZarwGGbQzuhZ2ECD9ntZyzS4kgsY2yx6qC5hOcQVyzVs06xI30FuargD645egCvAQ25euXLH7ayZViQztQYNB%2Bk1ZFFOH3cFWAOvalo4%2BzTqMt2KuNPkRxSuzuaGGhGn2dik4sW5KDq3%2BfgWPAlYhkFeE6xwwA3Q5%2FUUpTfo7TnR3kDV3gbVu1kg8Y35cQ2Yz8TM%2BSCXC%2BQAjGOSRZGeKDnZwh1seqOAepsb6x1gHP%2BKlltzlw0isOh124NWUnIDndaqwZR985BAw7k1Vriv%2FhZESqFSRbm8I8WmltuwwDQUu9S0qsrqFMVnpk5eK8NveX088J%2BvgmzDNHJVxMisGUv6XA52a30g%3D%3D",
+--* "xcx_code":"0813cUkR1wdxP111QhlR1kfHkR13cUkm","iv":"Hvv%2F4VBzCHtUqDpWxmZ%2Bxw%3D%3D","system":"Android 8.0.0","share_history_id":"",
+--* "version_code":"1","version_name":"1.0.3","sid":"","code":"black_card","ckey":"","h":"165574c0519de2099ddb73ac1de40f36"}
+--* 小程序账号绑定(创建用户)
+--*/
+function class_member:xcxBind()
+
+    data = this:params()
+    product_channel = this:currentProductChannel()
+    code = fetch(data, 'xcx_code')
+    xcx = new
+    XcxEvents(product_channel)
+    --// openid可以用来区分用户在不同的设备中使用
+    xcx_openid = xcx:getOpenid(code)
+    if (not xcx_openid) then
+        info('Exce 注册失败 请关闭微信重新打开', this:params())
+        return this:renderJSON(ERROR_CODE_FAIL, '授权失败code')
+    end
+    wx_unionid = xcx:getUnionid(code)
+    system = fetch(data, 'system')
+    share_history_id = fetch(data, 'share_history_id', 0)
+
+
+    --//查询
+    user = Member:findFirstByWxThirdUnionid(product_channel, wx_unionid)
+    if (not user) then
+        user = Member:findFirstByXcxOpenid(product_channel, xcx_openid)
+    end
+
+    if (user) then
+
+        if (not user.wx_unionid) then
+            user.wx_unionid = wx_unionid
+            user:update()
+        end
+
+        if (not user.xcx_openid) then
+            user.xcx_openid = xcx_openid
+            user:update()
+        end
+        this:renderJSON(ERROR_CODE_SUCCESS, '绑定成功', user:toSimpleJson())
+    end
+
+
+    --//创建
+    --//        share_history = \ShareHistories::findFirstById(share_history_id) 
+    --//        parent_id = 0 //如果是0,独立用户
+    --//        if (share_history && share_history:user_id) {
+    --//            parent_id = share_history:user_id 
+    --//        }
+
+    local user_info, error_code = xcx:getUserInfo(code, data)
+    if (error_code == ERROR_CODE_SUCCESS) then
+        user_info = _json_decode(user_info, true)
+
+        wx_unionid = fetch(user_info, 'unionId')
+
+        --/** @var \Member user */
+        user = Member:findFirstByWxThirdUnionid(product_channel, wx_unionid)
+        if (not user) then
+            user = Member:findFirstByXcxOpenid(product_channel, xcx_openid)
+        end
+
+        if (user) then
+            if (user:isForbidden()) then
+                return this:renderJSON(ERROR_CODE_FAIL, '')
+            end
+            if (not user.wx_unionid) then
+                user.wx_unionid = wx_unionid
+                user:update()
+            end
+
+            if (not user.xcx_openid) then
+                user.xcx_openid = xcx_openid
+                user:update()
+            end
+
+            return this:renderJSON(ERROR_CODE_SUCCESS, '绑定成功', user:toSimpleJson())
+        end
+
+        local opts = {
+            ['xcx_openid'] = xcx_openid,
+            ['system'] = system,
+            ['parent_id'] = 0, -- parent_id,
+            ['platform_version'] = explode(" ", system)['1'],
+            ['platform'] = this:getPlatform(),
+            ['ip'] = this:remoteIp(),
+            ['wx_unionid'] = wx_unionid,
+            ['nickname'] = fetch(user_info, 'nickName')
+        }
+
+        if (not wx_unionid) then
+            info('Exce 注册no wx_unionid', opts)
+        end
+
+        local user = Member:registerForXcxOpenId(product_channel, opts)
+        if (not user) then
+            info('Exce 注册失败 请关闭微信重新打开', opts)
+            return this:renderJSON(ERROR_CODE_FAIL, '请关闭微信重新打开')
+        end
+
+        url = fetch(user_info, 'avatarUrl')
+        temp = APP_ROOT .. 'temp/' .. uniqid() .. ".jpg"
+        if (url and httpSave(url, temp)) then
+            user:updateAvatar(temp)
+            unlink(temp)
+        end
+
+        return this:renderJSON(ERROR_CODE_SUCCESS, '绑定成功', user:toSimpleJson())
+    end
+
+    info('Exce 注册失败 请关闭微信重新打开', this:params())
+
+    return this:renderJSON(ERROR_CODE_FAIL, '失败')
+end
+
+
+--/**
+--* 微信小程序静默授权
+--*/
+function class_member:code_login()
+
+    local xcx_code = _http_params('xcx_code')
+    if (not xcx_code) then
+        return self:renderJSON(nil, '请关闭微信重新打开:code', -1)
+    end
+
+    -- local product_channel = this.currentProductChannel()
+
+    local appid, secret = 'wx5eb19e1204ee7c0f', 'c3ded1ff17a2eb575cb5f606c4472236'
+    local xcx = require('oshine/wechat_xcx@1.?:xcx'):new(appid, secret)
+    local xcx_openid, wx_third_unionid = xcx:getOpenid(xcx_code)
+    if (not xcx_openid) then
+        print('Exce 注册失败 请关闭微信重新打开')
+        return self:renderJSON(nil, '授权失败code', -2)
+    end
+
+    -- 通过openid查找用户
+    local member = __model.member:findFirstBy('xcx_openid', xcx_openid)
+    if (not member and wx_third_unionid) then
+        member = __model.member:findFirstBy('wx_third_unionid', wx_third_unionid)
+    end
+
+    print('member:===')
+
+    if (member) then
+        if (member:isForbidden()) then
+            return self:renderJSON('用户被禁止', nil, -1)
+        end
+
+        -- 每次登陆都生成新到sid
+        member:newSid()
+
+        if (not member.wx_third_unionid) then
+            member.wx_third_unionid = wx_third_unionid
+            member:update()
+        end
+
+        if (not member.xcx_openid) then
+            member.xcx_openid = xcx_openid
+        end
+
+        member:update()
+
+        return self:renderJSON({ userInfo = member:toSimpleJson() }, '登陆成功')
+    end
+
+    local opts = {
+        status = 1,
+        xcx_openid = xcx_openid,
+        reg_ip = _http_ip(),
+        wx_third_unionid = wx_third_unionid,
+    }
+
+    if (not wx_third_unionid) then
+        print('Exce 注册no third_unionid', _json_encode(opts))
+    end
+
+    member = __model.member:regXcxOpenId(opts)
+    if (not member) then
+        return self:renderJSON(nil, '请关闭微信重新打开:register fail', -1)
+    end
+
+    --Action:new(member.username, '用户注册成功:' .. member.id, '') 
+    return self:renderJSON({ userInfo = member:toSimpleJson() }, 'ok')
+
+end
+
+
+-- 微信小程序同步用户信息通过openid
+function class_member:xcx_sync_info()
+    local member = self:currentMember()
+    --print(member.id)
+
+
+    -- 如果修改手机号，那么仅仅是修改手机号码
+    local mobile = _http_params('mobile')
+    if mobile then
+        member.mobile = mobile
+        member:update()
+        return self:renderJSON(nil, 'ok')
+    end
+
+    -- 否则修改用户相关信息
+    local avatarUrl, city, country, gender, language, nickName, province = _http_params('avatarUrl',
+            'city',
+            'country',
+            'gender',
+            'language',
+            'nickName',
+            'province')
+
+    member.avatar = avatarUrl
+
+    --member.city = city
+    --member.country = country
+
+    member.sex = gender == '1' and 1 or 0
+    member.lan = language
+    member.nickname = nickName
+    member:update()
+    return self:renderJSON(nil, 'ok')
+
+end
+
+--// 微信授权获取手机登陆
+function class_member:authorizationMobileLoginAction()
+
+    --if (not this.request:isPost()) then
+    --    return this:renderJSON(ERROR_CODE_FAIL, 'must post！')
+    --end
+
+    local code = _http_params('code')
+    print('绑定参数', code)
+    if (not code) then
+        return self:renderJSON('no post params！')
+    end
+
+    local xcx = require('xcx')
+
+    local xcx_openid = xcx:getOpenid(code)
+    if (not xcx_openid) then
+        print(code, 'xcx_openid参数有误', xcx_openid)
+
+        return this:renderJSON(ERROR_CODE_FAIL, 'not got open id！')
+    end
+
+    local wx_wx_unionid = xcx:getUnionid(code)
+
+    local user_info, error_code = xcx:getUserInfo(code, data)
+    print('微信返回参数:', code, 'user_info:', user_info, 'error_code:', error_code)
+
+    if (0 ~= error_code) then
+        return self:renderJSON('we back params error！' .. error_code)
+    end
+
+    user_info = json_decode(user_info, true)
+    local mobile = fetch(user_info, 'phoneNumber')
+    if (not mobile) then
+        print('mobile参数有误', mobile)
+
+        return self:renderJSON(ERROR_CODE_FAIL, 'not get mobile！')
+    end
+    return self:renderJson('',
+            { ["mobile"] = mobile, ['xcx_openid'] = xcx_openid })
+end
+
+class_member = _extend(class_member, "controller/api/_base")
+
+return class_member.super[2](class_member)

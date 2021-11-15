@@ -1,0 +1,141 @@
+--_out(DIR, VENDOR)
+
+__woo_mvc = setmetatable({}, {
+    __index = function(_, n)
+        --print('__model:',v)
+        -- get redis_conn
+        if n == 'redis_ins' then
+            return require('oshine/woo_mvc@1?:db'):new(_data_get('$_woo_mvc_redis'))
+
+        elseif n == 'ssdb_conn' then
+            return require('oshine/woo_mvc@1?:db'):new(_data_get('$_woo_mvc_ssdb'))
+
+
+        elseif n == 'ssdb_conn' then
+            return _data_get('$_woo_mvc_ssdb')
+
+
+        elseif n == 'redis_conn' then
+            return _data_get('$_woo_mvc_redis')
+
+
+        elseif n == 'db_ins' then
+            return require('oshine/woo_mvc@1?:db'):new(_data_get('$_woo_mvc_sql'))
+        elseif n == 'db_conn' then
+            return _data_get('$_woo_mvc_sql')
+        end
+    end
+})
+
+
+-- local import
+_import = function(path)
+    local p = path --_dir_name ..
+    --_remove_package_cache(p)
+    --print('import:==', p,package.path)
+
+    local res = require(p)
+    return res
+end
+
+_merge_left = function(a, b)
+    for i, v in pairs(b) do
+        print(i, v)
+        if i ~= 'new' then
+            if a[i] then
+                a[i] = nil
+            end
+            a[i] = v
+        end
+    end
+    return a
+end
+
+_new = function(path)
+    return _new_model(path)
+end
+
+--- 渲染某个model
+---@param model string
+---@param key string
+---@param value string
+---@param empty_name string
+---@return table@结果形似 {[0]='empty_name',12='小明'}
+_render_model = function(model, key, value, empty_name)
+    local _operator_role = _new_model(model)
+    local opRole = _operator_role:find({ conditions = "status = 1 " })
+    local select_items = {}
+    if empty_name then
+        select_items = { [0] = empty_name }
+    end
+    for _, v in pairs(opRole) do
+        select_items[v[key]] = v[value]
+    end
+    --print(_json_encode(select_items))
+    return select_items
+end
+
+--- 初始化一个model
+---@param m string@ model name
+_new_model = function(m)
+    local p = 'model.' .. m
+    --_remove_package_cache(p)
+    local res = _import(p)
+    if not res then
+        assert(false, '未找到模型：' .. p)
+    end
+    return res:new()
+end
+
+--- 继承某个类
+--_extend = function(model_self, model_name, ...)
+--    --_remove_package_cache(model_name)
+--    --print('extend:==', model_name)
+--    local r = _import(model_name):new(model_self, ...)
+--    return r
+--end
+
+---加锁
+__try_lock = function(lock_key, request_id, func, ...)
+    if func == nil then
+        assert(false, 'params 2 must be func')
+    end
+    if nil == request_id then
+        request_id = _time(true)
+    end
+
+    local SET_IF_NOT_EXIST = "NX";
+    local SET_WITH_EXPIRE_TIME = "PX";
+
+    local RELEASE_SUCCESS = 1;
+    local LOCK_SUCCESS = "OK";
+
+    local expireTime = 10000
+
+    local redis = _import('oshine/woo_mvc@1.?:redis'):new()
+
+    while true do
+        --枷锁
+        local r = redis:exec('set', lock_key, request_id, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, expireTime)
+        if LOCK_SUCCESS == r then
+            local status, rf = pcall(func, ...)
+
+            -- 解锁
+            local script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+            local result = redis:eval(script, lock_key, request_id);
+            redis:close()
+            print("\n", 'eveal:', result, "\n")
+            if RELEASE_SUCCESS ~= result * 1 then
+                assert(false, 'redis unlock error')
+            end
+            -- 解锁完毕后，判断回调是否成功，失败直接终止程序
+            if status == false then
+                assert(false, "cal func err," .. debug.traceback())
+            end
+
+            return rf
+        else
+            _sleep(20)
+        end
+    end
+end

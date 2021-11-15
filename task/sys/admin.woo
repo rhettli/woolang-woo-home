@@ -1,0 +1,92 @@
+return {
+    _update = { zh = '目录 /controller/admin/* 下的control文件被修改，需要手动调用此函数来更新权限', en = 'call this function after change file in folder: /controller/admin/*.woo' },
+    update = function(p, lan)
+        _ls(_DIR .. '/controller/admin', function(file, is_folder)
+
+            f = _str_replace(file.name, '\\', '/')
+            local res = _str_split(f, '/')
+            --print(res[#res])
+            local p_name = res[#res]
+            p_name = _str_split(p_name, '.')[1]
+            if res[#res] == 'base.woo' then
+                return
+            end
+            if _end_with(f, '.woo') then
+                print('update:', f)
+                local content = _cat(_DIR .. '/controller/admin/' .. file.name, true)
+                if _is_valid(content) then
+                    local a_arr = _str_split(content, '\n')
+                    local permission_key = ''
+                    for _, v in pairs(a_arr) do
+                        if #v > 5 then
+                            --print('v:================', v)
+                            if not _is_valid(permission_key) then
+                                --print('p:================', permission_key)
+                                local r = _re_match(v, '-- *?\\[P:(.+?)\\|(.*?)\\]')
+                                if _is_valid(r) and r[1] then
+                                    r = r[1]
+                                    permission_key = r[2]
+                                    if p_name ~= permission_key then
+                                        _color('error', 'file name is ', p_name .. ' but defined P: is ' .. (permission_key or ''))
+                                        return
+                                    end
+                                    --_re_match('-- [P:article|文章]', '-- *?\\[P:(.+?)\\|(.*?)\\]')
+                                    local op_permission = _new_model('operator_permission')
+                                    local omp = op_permission:findFirst({ conditions = 'p="' .. p_name .. '" and i is null' })
+                                    if not _is_valid(omp) then
+                                        op_permission.p = p_name
+                                        op_permission.name = r[3]
+                                        op_permission.created_at = _time()
+                                        op_permission:save()
+                                    end
+                                end
+                            else
+                                local r = _re_match(v, '-- *?\\[I:(.+?)\\|(.*?)\\]')
+                                if _is_valid(r) then
+                                    r = r[1]
+                                    if r and #r == 3 then
+                                        local op_permission = _new_model('operator_permission')
+                                        local omp = op_permission:findFirst({ conditions = 'p="' .. p_name .. '" and i="' .. r[2] .. '"' })
+                                        _out(p_name, r)
+                                        if not _is_valid(omp) then
+                                            op_permission = _new_model('operator_permission')
+                                            op_permission.p = p_name
+                                            op_permission.i = r[2]
+                                            op_permission.name = r[3]
+                                            op_permission.created_at = _time()
+                                            op_permission:save()
+                                        else
+                                            if omp and omp.id and omp.name ~= r[3] then
+                                                omp.name = r[3]
+                                                omp:save()
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        --print('=== end', p_name)
+                    end
+                end
+            end
+            --print(f, r)
+        end)
+    end,
+    add = function(p)
+    end,
+    del = function(p)
+    end,
+    help = { zh = '使用帮助，可以看也可以不看', en = 'user manual' },
+    help = function(p)
+        local en = [[
+if you update permission in <red>controller/admin/*</> ,you must run  <suc>%s</>
+        ]]
+        local zh = [[
+1.请不要手动编辑在 <cyan>%s</> 中的权限，使用murphy提供的命令添加，比如<red>添加</>admin list 权限： <suc>%s</>
+2.如果您实在忍不住编辑了权限，那么请更新全部文件权限，执行：<suc>%s</>
+3.<red>删除</>权限： <suc>%s</>
+        ]]
+        _color('diy', ({ en = en, zh = zh })[p[1]]:format('controller/admin/*', 'woo murphy permission add admin list', 'woo murphy permission update',
+                'woo murphy permission del admin list'))
+    end
+}
